@@ -59,7 +59,13 @@ class AC_Cron {
             );
 
             // Get active notification channels
-            $channels = explode(',', get_option('ac_notification_channels', 'email,sms'));
+            $channels = get_option('ac_notification_channels', array('email', 'sms'));
+            if (is_string($channels)) {
+                $channels = explode(',', $channels);
+            }
+            if (!is_array($channels)) {
+                $channels = array();
+            }
             
             // Email if email exists and email channel is active
             if (!empty($cart->email) && in_array('email', $channels)) {

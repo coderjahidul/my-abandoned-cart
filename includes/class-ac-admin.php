@@ -353,7 +353,13 @@ class AC_Admin
                                 <th scope="row">Active Channels</th>
                                 <td>
                                     <?php 
-                                    $channels = explode(',', get_option('ac_notification_channels', 'email,sms'));
+                                    $channels = get_option('ac_notification_channels', array('email', 'sms'));
+                                    if (is_string($channels)) {
+                                        $channels = explode(',', $channels);
+                                    }
+                                    if (!is_array($channels)) {
+                                        $channels = array();
+                                    }
                                     ?>
                                     <label><input type="checkbox" name="ac_notification_channels[]" value="email" <?php checked(in_array('email', $channels), true); ?> /> Email</label><br>
                                     <label><input type="checkbox" name="ac_notification_channels[]" value="sms" <?php checked(in_array('sms', $channels), true); ?> /> SMS</label><br>
