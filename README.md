@@ -5,7 +5,8 @@ Complete Production-Ready WooCommerce Abandoned Cart Plugin with Guest Restore &
 ## Features
 
 - **Automated Tracking**: Tracks carts for logged-in users and guests.
-- **Guest Capture**: Intelligently captures guest email, name, and phone via AJAX.
+- **Guest Capture**: Intelligently captures guest phone (required) and email (optional) via AJAX.
+- **Improved Identification**: Avoids record duplication by using Phone and Session ID for better accuracy.
 - **Multi-Channel Reminders**: Sends reminders via both Email and SMS.
 - **Timed Reminders**:
   - **1st Reminder**: After 30 minutes.

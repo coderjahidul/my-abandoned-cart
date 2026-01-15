@@ -111,11 +111,12 @@ class AC_Tracker
         $phone = isset($posted['billing_phone']) ? sanitize_text_field($posted['billing_phone']) : '';
         $session_id = WC()->session->get_customer_id();
 
-        // Check if entry already exists for this session or email
+        // Check if entry already exists for this session, email, or phone (match email/phone only if not empty)
         $existing = $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM $table_name WHERE (session_id = %s OR email = %s) AND status = 'abandoned' LIMIT 1",
+            "SELECT id FROM $table_name WHERE (session_id = %s OR (email = %s AND email != '') OR (phone = %s AND phone != '')) AND status = 'abandoned' LIMIT 1",
             $session_id,
-            $email
+            $email,
+            $phone
         ));
 
         $cart_items = WC()->cart->get_cart();
@@ -167,21 +168,48 @@ class AC_Tracker
             );
             WC()->session->set('ac_recovered_id', null);
         } else {
-            // If not directly recovered via link, try to find by email or session and mark as recovered/delete
-            // For analytics, it's better to mark as recovered if found
+            // If not directly recovered via link, try to find by session, email, or phone and mark as recovered
             $email = $order->get_billing_email();
-            $wpdb->update(
-                $table_name,
-                array(
-                    'status' => 'recovered',
-                    'recovered_at' => current_time('mysql'),
-                    'order_id' => $order_id,
-                    'recovered_amount' => $order->get_total()
-                ),
-                array('email' => $email, 'status' => 'abandoned'),
-                array('%s', '%s', '%d', '%f'),
-                array('%s', '%s')
-            );
+            $phone = $order->get_billing_phone();
+            $session_id = (WC()->session) ? WC()->session->get_customer_id() : '';
+
+            // Find specific cart ID
+            $cart_id = 0;
+            if ($session_id) {
+                $cart_id = $wpdb->get_var($wpdb->prepare(
+                    "SELECT id FROM $table_name WHERE session_id = %s AND status = 'abandoned' ORDER BY last_activity DESC LIMIT 1",
+                    $session_id
+                ));
+            }
+
+            if (!$cart_id && !empty($email)) {
+                $cart_id = $wpdb->get_var($wpdb->prepare(
+                    "SELECT id FROM $table_name WHERE email = %s AND status = 'abandoned' ORDER BY last_activity DESC LIMIT 1",
+                    $email
+                ));
+            }
+
+            if (!$cart_id && !empty($phone)) {
+                $cart_id = $wpdb->get_var($wpdb->prepare(
+                    "SELECT id FROM $table_name WHERE phone = %s AND status = 'abandoned' ORDER BY last_activity DESC LIMIT 1",
+                    $phone
+                ));
+            }
+
+            if ($cart_id) {
+                $wpdb->update(
+                    $table_name,
+                    array(
+                        'status' => 'recovered',
+                        'recovered_at' => current_time('mysql'),
+                        'order_id' => $order_id,
+                        'recovered_amount' => $order->get_total()
+                    ),
+                    array('id' => $cart_id),
+                    array('%s', '%s', '%d', '%f'),
+                    array('%d')
+                );
+            }
         }
     }
 

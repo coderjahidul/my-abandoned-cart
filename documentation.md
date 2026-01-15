@@ -6,10 +6,20 @@
 
 ## How It Works
 
-### 1. Cart Tracking
-The plugin monitors the WooCommerce cart session. For logged-in users, it uses their account information. For guests, it utilizes an AJAX-based capture mechanism that triggers when they enter their details on the checkout page.
+### 1. Cart Tracking & Identification
+The plugin monitors the WooCommerce cart session using a multi-layered identification strategy:
+- **Session ID**: Primary tracking for the active browsing session.
+- **Phone (Required)**: Used as the main persistent identifier for guest users.
+- **Email (Optional)**: Used for identification if provided.
 
-### 2. Recovery Workflow
+The system intelligently merges or updates records if a user returns in a new session but provides the same phone number or email, ensuring a single, accurate profile for each customer.
+
+### 2. Data Accuracy
+To prevent data duplication and "replaced" data issues, the plugin:
+- Ensures empty email addresses never match across different guest sessions.
+- Uses strict specific-ID matching when marking carts as recovered, ensuring only the correct customer's record is updated when an order is completed.
+
+### 3. Recovery Workflow
 The plugin employs a 3-step reminder system:
 
 | Reminder | Timing | Content | Coupon |
@@ -18,7 +28,7 @@ The plugin employs a 3-step reminder system:
 | 2nd | 24 Hours | Urgency + Offer | 10% Off |
 | 3rd | 48 Hours | Final Reminder | 10% Off |
 
-### 3. Notification Channels
+### 4. Notification Channels
 - **Email**: Sends a beautifully formatted HTML email showing the abandoned items and a restore button.
 - **SMS**: Sends a concise text message via **BulkSMSBD** with a direct restoration link.
 
@@ -47,6 +57,7 @@ Upon activation, the plugin creates a custom table `{wp_prefix}abandoned_carts` 
 - Reminder Status (Sent/Not Sent)
 - Unique Restore Key
 - Generated Coupon Codes
+- Order Analytics (Recovery Status, Amount, Order ID)
 
 ### Cron Job
 The plugin registers a recurring hourly cron event `ac_cron_event` to scan the database and send reminders based on the timing rules.

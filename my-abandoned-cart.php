@@ -64,11 +64,12 @@ function ac_capture_guest()
     $phone = sanitize_text_field($_POST['phone']);
     $session_id = WC()->session->get_customer_id();
 
-    // Check if entry already exists for this session or email
+    // Check if entry already exists for this session, email, or phone (match email/phone only if not empty)
     $existing = $wpdb->get_var($wpdb->prepare(
-        "SELECT id FROM $table_name WHERE (session_id = %s OR email = %s) AND status = 'abandoned' LIMIT 1",
+        "SELECT id FROM $table_name WHERE (session_id = %s OR (email = %s AND email != '') OR (phone = %s AND phone != '')) AND status = 'abandoned' LIMIT 1",
         $session_id,
-        $email
+        $email,
+        $phone
     ));
 
     $data = array(
