@@ -13,6 +13,11 @@ Complete Production-Ready WooCommerce Abandoned Cart Plugin with Guest Restore &
   - **2nd Reminder**: After 24 hours (includes 10% discount coupon).
   - **3rd Reminder**: After 48 hours.
 - **One-Click Restore**: Unique restore links to recover the cart instantly.
+- **Customizable Settings**:
+  - Editable reminder timing (adjust intervals for each reminder)
+  - WYSIWYG email template editor with placeholder support
+  - SMS template customization
+  - Configurable coupon settings (type, amount, which reminders)
 - **Admin Dashboard**: View and manage all incomplete orders from the WordPress admin.
 - **SMS Integration**: Built-in support for BulkSMSBD API.
 

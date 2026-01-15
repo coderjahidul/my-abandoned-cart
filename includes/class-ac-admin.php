@@ -67,8 +67,27 @@ class AC_Admin
 
     public function register_settings()
     {
+        // SMS Settings
         register_setting('ac_settings_group', 'ac_sms_api_key');
         register_setting('ac_settings_group', 'ac_sms_sender_id');
+        
+        // Reminder Timing Settings (in minutes)
+        register_setting('ac_settings_group', 'ac_reminder1_delay', array('default' => 30));
+        register_setting('ac_settings_group', 'ac_reminder2_delay', array('default' => 1440));
+        register_setting('ac_settings_group', 'ac_reminder3_delay', array('default' => 2880));
+        
+        // Email Template Settings
+        register_setting('ac_settings_group', 'ac_email_subject', array('default' => 'আপনি আপনার কার্ট শেষ করেননি!'));
+        register_setting('ac_settings_group', 'ac_email_template');
+        
+        // SMS Template Settings
+        register_setting('ac_settings_group', 'ac_sms_template', array('default' => 'হ্যালো {customer_name}, আপনার কার্টে পণ্য রয়েছে। শেষ করতে দেখুন: {restore_link}'));
+        
+        // Coupon Settings
+        register_setting('ac_settings_group', 'ac_coupon_enabled', array('default' => '1'));
+        register_setting('ac_settings_group', 'ac_coupon_type', array('default' => 'percent'));
+        register_setting('ac_settings_group', 'ac_coupon_amount', array('default' => 10));
+        register_setting('ac_settings_group', 'ac_coupon_reminder', array('default' => '2,3'));
     }
 
     public function dashboard_page()
@@ -223,47 +242,246 @@ class AC_Admin
 
     public function settings_page()
     {
+        // Get default email template
+        $default_email_template = $this->get_default_email_template();
+        
         ?>
         <div class="wrap">
-            <h1>BulkSMS API Settings</h1>
-            <p>Configure your <strong>BulkSMS BD</strong> account details below to send SMS reminders.</p>
+            <h1>Abandoned Cart Settings</h1>
+            
+            <style>
+                .ac-tabs { margin: 20px 0; border-bottom: 1px solid #ccc; }
+                .ac-tabs button { background: #f1f1f1; border: 1px solid #ccc; border-bottom: none; padding: 10px 20px; margin-right: 5px; cursor: pointer; }
+                .ac-tabs button.active { background: #fff; font-weight: bold; }
+                .ac-tab-content { display: none; padding: 20px; background: #fff; border: 1px solid #ccc; }
+                .ac-tab-content.active { display: block; }
+                .ac-placeholder-help { background: #f0f8ff; padding: 10px; margin: 10px 0; border-left: 4px solid #0073aa; }
+                .ac-placeholder-help code { background: #e8e8e8; padding: 2px 6px; border-radius: 3px; }
+            </style>
+            
+            <div class="ac-tabs">
+                <button class="ac-tab-btn active" data-tab="sms">SMS API</button>
+                <button class="ac-tab-btn" data-tab="timing">Reminder Timing</button>
+                <button class="ac-tab-btn" data-tab="email">Email Template</button>
+                <button class="ac-tab-btn" data-tab="sms-template">SMS Template</button>
+                <button class="ac-tab-btn" data-tab="coupon">Coupon Settings</button>
+            </div>
+            
             <form method="post" action="options.php">
                 <?php settings_fields('ac_settings_group'); ?>
                 <?php do_settings_sections('ac_settings_group'); ?>
-
-                <table class="form-table">
-                    <tr valign="top">
-                        <th scope="row"><label for="ac_sms_api_key">API Key</label></th>
-                        <td>
-                            <input type="text" id="ac_sms_api_key" name="ac_sms_api_key"
-                                value="<?php echo esc_attr(get_option('ac_sms_api_key')); ?>" class="regular-text"
-                                placeholder="Enter your BulkSMSBD API key" />
-                            <p class="description">Get your API key from your BulkSMSBD account.</p>
-                        </td>
-                    </tr>
-
-                    <tr valign="top">
-                        <th scope="row"><label for="ac_sms_sender_id">Sender ID</label></th>
-                        <td>
-                            <input type="text" id="ac_sms_sender_id" name="ac_sms_sender_id"
-                                value="<?php echo esc_attr(get_option('ac_sms_sender_id')); ?>" class="regular-text"
-                                placeholder="Enter your Sender ID" />
-                            <p class="description">Your approved sender name registered with BulkSMSBD.</p>
-                        </td>
-                    </tr>
-                </table>
-
-                <?php submit_button('Save Settings'); ?>
+                
+                <!-- SMS API Tab -->
+                <div class="ac-tab-content active" data-tab="sms">
+                    <h2>BulkSMS API Settings</h2>
+                    <p>Configure your <strong>BulkSMS BD</strong> account details below to send SMS reminders.</p>
+                    
+                    <table class="form-table">
+                        <tr valign="top">
+                            <th scope="row"><label for="ac_sms_api_key">API Key</label></th>
+                            <td>
+                                <input type="text" id="ac_sms_api_key" name="ac_sms_api_key"
+                                    value="<?php echo esc_attr(get_option('ac_sms_api_key')); ?>" class="regular-text"
+                                    placeholder="Enter your BulkSMSBD API key" />
+                                <p class="description">Get your API key from your BulkSMSBD account.</p>
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <th scope="row"><label for="ac_sms_sender_id">Sender ID</label></th>
+                            <td>
+                                <input type="text" id="ac_sms_sender_id" name="ac_sms_sender_id"
+                                    value="<?php echo esc_attr(get_option('ac_sms_sender_id')); ?>" class="regular-text"
+                                    placeholder="Enter your Sender ID" />
+                                <p class="description">Your approved sender name registered with BulkSMSBD.</p>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <p style="margin-top: 20px;">
+                        🔗 <a href="https://bulksmsbd.net/" target="_blank" style="text-decoration:none; font-weight:bold; color:#0073aa;">
+                            Visit BulkSMSBD Website
+                        </a> — Create an account or get your API credentials.
+                    </p>
+                </div>
+                
+                <!-- Reminder Timing Tab -->
+                <div class="ac-tab-content" data-tab="timing">
+                    <h2>Reminder Timing</h2>
+                    <p>Set custom delays for each reminder (in minutes).</p>
+                    
+                    <table class="form-table">
+                        <tr valign="top">
+                            <th scope="row"><label for="ac_reminder1_delay">1st Reminder Delay</label></th>
+                            <td>
+                                <input type="number" id="ac_reminder1_delay" name="ac_reminder1_delay"
+                                    value="<?php echo esc_attr(get_option('ac_reminder1_delay', 30)); ?>" class="small-text" min="1" />
+                                <span>minutes</span>
+                                <p class="description">Default: 30 minutes (0.5 hours)</p>
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <th scope="row"><label for="ac_reminder2_delay">2nd Reminder Delay</label></th>
+                            <td>
+                                <input type="number" id="ac_reminder2_delay" name="ac_reminder2_delay"
+                                    value="<?php echo esc_attr(get_option('ac_reminder2_delay', 1440)); ?>" class="small-text" min="1" />
+                                <span>minutes</span>
+                                <p class="description">Default: 1440 minutes (24 hours)</p>
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <th scope="row"><label for="ac_reminder3_delay">3rd Reminder Delay</label></th>
+                            <td>
+                                <input type="number" id="ac_reminder3_delay" name="ac_reminder3_delay"
+                                    value="<?php echo esc_attr(get_option('ac_reminder3_delay', 2880)); ?>" class="small-text" min="1" />
+                                <span>minutes</span>
+                                <p class="description">Default: 2880 minutes (48 hours)</p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- Email Template Tab -->
+                <div class="ac-tab-content" data-tab="email">
+                    <h2>Email Template</h2>
+                    <p>Customize the email subject and body sent to customers.</p>
+                    
+                    <div class="ac-placeholder-help">
+                        <strong>Available Placeholders:</strong><br>
+                        <code>{customer_name}</code> - Customer's name<br>
+                        <code>{restore_link}</code> - Cart restoration link<br>
+                        <code>{coupon_code}</code> - Generated coupon code (if applicable)<br>
+                        <code>{site_name}</code> - Your site name
+                    </div>
+                    
+                    <table class="form-table">
+                        <tr valign="top">
+                            <th scope="row"><label for="ac_email_subject">Email Subject</label></th>
+                            <td>
+                                <input type="text" id="ac_email_subject" name="ac_email_subject"
+                                    value="<?php echo esc_attr(get_option('ac_email_subject', 'আপনি আপনার কার্ট শেষ করেননি!')); ?>" 
+                                    class="large-text" />
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <th scope="row"><label for="ac_email_template">Email Body</label></th>
+                            <td>
+                                <?php
+                                $content = get_option('ac_email_template', $default_email_template);
+                                wp_editor($content, 'ac_email_template', array(
+                                    'textarea_name' => 'ac_email_template',
+                                    'textarea_rows' => 15,
+                                    'media_buttons' => false,
+                                    'teeny' => false,
+                                    'tinymce' => array(
+                                        'toolbar1' => 'formatselect,bold,italic,underline,bullist,numlist,link,alignleft,aligncenter,alignright,undo,redo',
+                                    )
+                                ));
+                                ?>
+                                <p class="description">Use the placeholders above in your email template.</p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- SMS Template Tab -->
+                <div class="ac-tab-content" data-tab="sms-template">
+                    <h2>SMS Template</h2>
+                    <p>Customize the SMS message sent to customers.</p>
+                    
+                    <div class="ac-placeholder-help">
+                        <strong>Available Placeholders:</strong><br>
+                        <code>{customer_name}</code> - Customer's name<br>
+                        <code>{restore_link}</code> - Cart restoration link<br>
+                        <code>{coupon_code}</code> - Generated coupon code (if applicable)<br>
+                        <code>{site_name}</code> - Your site name
+                    </div>
+                    
+                    <table class="form-table">
+                        <tr valign="top">
+                            <th scope="row"><label for="ac_sms_template">SMS Message</label></th>
+                            <td>
+                                <textarea id="ac_sms_template" name="ac_sms_template" rows="5" class="large-text"><?php 
+                                    echo esc_textarea(get_option('ac_sms_template', 'হ্যালো {customer_name}, আপনার কার্টে পণ্য রয়েছে। শেষ করতে দেখুন: {restore_link}')); 
+                                ?></textarea>
+                                <p class="description">Keep SMS messages concise. Use placeholders for dynamic content.</p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- Coupon Settings Tab -->
+                <div class="ac-tab-content" data-tab="coupon">
+                    <h2>Coupon Settings</h2>
+                    <p>Configure automatic coupon generation for reminders.</p>
+                    
+                    <table class="form-table">
+                        <tr valign="top">
+                            <th scope="row"><label for="ac_coupon_enabled">Enable Coupons</label></th>
+                            <td>
+                                <input type="checkbox" id="ac_coupon_enabled" name="ac_coupon_enabled" value="1" 
+                                    <?php checked(get_option('ac_coupon_enabled', '1'), '1'); ?> />
+                                <label for="ac_coupon_enabled">Generate coupons for reminders</label>
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <th scope="row"><label for="ac_coupon_type">Discount Type</label></th>
+                            <td>
+                                <select id="ac_coupon_type" name="ac_coupon_type">
+                                    <option value="percent" <?php selected(get_option('ac_coupon_type', 'percent'), 'percent'); ?>>Percentage Discount</option>
+                                    <option value="fixed_cart" <?php selected(get_option('ac_coupon_type', 'percent'), 'fixed_cart'); ?>>Fixed Cart Discount</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <th scope="row"><label for="ac_coupon_amount">Discount Amount</label></th>
+                            <td>
+                                <input type="number" id="ac_coupon_amount" name="ac_coupon_amount"
+                                    value="<?php echo esc_attr(get_option('ac_coupon_amount', 10)); ?>" 
+                                    class="small-text" min="0" step="0.01" />
+                                <p class="description">For percentage: enter 10 for 10%. For fixed: enter amount in your currency.</p>
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <th scope="row"><label for="ac_coupon_reminder">Include Coupon In</label></th>
+                            <td>
+                                <label><input type="checkbox" name="ac_coupon_reminder[]" value="2" 
+                                    <?php $reminders = explode(',', get_option('ac_coupon_reminder', '2,3')); checked(in_array('2', $reminders), true); ?> /> 
+                                    2nd Reminder</label><br>
+                                <label><input type="checkbox" name="ac_coupon_reminder[]" value="3" 
+                                    <?php checked(in_array('3', $reminders), true); ?> /> 
+                                    3rd Reminder</label>
+                                <p class="description">Select which reminders should include a coupon code.</p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <?php submit_button('Save All Settings'); ?>
             </form>
-
-            <p style="margin-top: 20px;">
-                🔗 <a href="https://bulksmsbd.net/" target="_blank"
-                    style="text-decoration:none; font-weight:bold; color:#0073aa;">
-                    Visit BulkSMSBD Website
-                </a> — Create an account or get your API credentials.
-            </p>
+            
+            <script>
+                jQuery(document).ready(function($) {
+                    $('.ac-tab-btn').on('click', function() {
+                        var tab = $(this).data('tab');
+                        $('.ac-tab-btn').removeClass('active');
+                        $('.ac-tab-content').removeClass('active');
+                        $(this).addClass('active');
+                        $('.ac-tab-content[data-tab="' + tab + '"]').addClass('active');
+                    });
+                });
+            </script>
         </div>
         <?php
+    }
+    
+    private function get_default_email_template()
+    {
+        return '<h2>হ্যালো {customer_name},</h2>
+<p>আপনি আপনার কার্টে কিছু প্রোডাক্ট রেখেছেন কিন্তু Checkout শেষ করেননি।</p>
+<p>Checkout করতে নিচের বাটনে ক্লিক করুন:</p>
+<p><a href="{restore_link}" style="background: #0073aa; color: #fff; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Checkout Now</a></p>
+<p><strong>বিশেষ অফার:</strong> আপনার ডিসকাউন্ট কুপন কোড: <strong>{coupon_code}</strong></p>
+<p>ধন্যবাদ,<br>{site_name}</p>';
     }
 }
 

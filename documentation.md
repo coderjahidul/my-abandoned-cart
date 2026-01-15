@@ -32,6 +32,37 @@ The plugin employs a 3-step reminder system:
 - **Email**: Sends a beautifully formatted HTML email showing the abandoned items and a restore button.
 - **SMS**: Sends a concise text message via **BulkSMSBD** with a direct restoration link.
 
+## Customization Settings
+
+The plugin provides extensive customization options through the WordPress admin interface under **In complete order > Settings**:
+
+### Reminder Timing
+- Configure custom delays for each reminder (in minutes)
+- Default: 30 min, 24 hours, 48 hours
+- Adjust based on your business needs
+
+### Email Templates
+- Custom email subject line
+- WYSIWYG editor for email body
+- Supports dynamic placeholders for personalization
+
+### SMS Templates
+- Customizable SMS message text
+- Supports the same placeholders as email
+
+### Coupon Configuration
+- Enable/disable automatic coupon generation
+- Choose discount type: Percentage or Fixed Cart
+- Set discount amount
+- Select which reminders (2nd, 3rd, or both) include coupons
+
+### Template Placeholders
+All templates support these dynamic placeholders:
+- `{customer_name}` - Customer's name
+- `{restore_link}` - Cart restoration link
+- `{coupon_code}` - Generated coupon code
+- `{site_name}` - Your site name
+
 ## Admin Features
 
 ### In Complete Order (Dashboard)

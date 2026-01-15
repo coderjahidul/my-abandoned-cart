@@ -10,10 +10,11 @@ class AC_Coupon {
     /**
      * Generate WooCommerce coupon
      * 
-     * @param int $discount_percentage Discount percentage (default 10)
+     * @param int|float $discount Discount amount
+     * @param string $discount_type Discount type ('percent' or 'fixed_cart')
      * @return string $code Coupon code
      */
-    public static function generate_coupon($discount = 10) {
+    public static function generate_coupon($discount = 10, $discount_type = 'percent') {
         $code = 'AC-' . strtoupper(wp_generate_password(6, false)); // Example: AC-AB12CD
 
         // Create coupon post
@@ -28,7 +29,7 @@ class AC_Coupon {
         $new_coupon_id = wp_insert_post($coupon);
 
         // Set coupon meta
-        update_post_meta($new_coupon_id, 'discount_type', 'percent'); // Percentage discount
+        update_post_meta($new_coupon_id, 'discount_type', $discount_type);
         update_post_meta($new_coupon_id, 'coupon_amount', $discount);
         update_post_meta($new_coupon_id, 'individual_use', 'no');
         update_post_meta($new_coupon_id, 'usage_limit', 1);

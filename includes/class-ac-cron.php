@@ -12,57 +12,80 @@ class AC_Cron {
         global $wpdb;
         $table_name = $wpdb->prefix . 'abandoned_carts';
 
-        $carts = $wpdb->get_results("SELECT * FROM $table_name");
+        $carts = $wpdb->get_results("SELECT * FROM $table_name WHERE status = 'abandoned'");
 
         foreach ($carts as $cart) {
             $name = $cart->name ?: 'গ্রাহক';
             $restore_link = add_query_arg('ac_restore', $cart->restore_key, site_url('/'));
             $cart_items = json_decode($cart->cart_data, true);
 
+            // Get timing settings (in minutes)
+            $reminder1_delay = get_option('ac_reminder1_delay', 30) * 60; // Convert to seconds
+            $reminder2_delay = get_option('ac_reminder2_delay', 1440) * 60;
+            $reminder3_delay = get_option('ac_reminder3_delay', 2880) * 60;
+
             // Determine which reminder to send
             $reminder_number = 0;
             $last_activity_time = strtotime($cart->last_activity);
             $current_time = current_time('timestamp');
 
-            if (!$cart->reminder1_sent && ($current_time - $last_activity_time) >= 1800) {
+            if (!$cart->reminder1_sent && ($current_time - $last_activity_time) >= $reminder1_delay) {
                 $reminder_number = 1;
-            } elseif (!$cart->reminder2_sent && ($current_time - $last_activity_time) >= 86400) {
+            } elseif (!$cart->reminder2_sent && ($current_time - $last_activity_time) >= $reminder2_delay) {
                 $reminder_number = 2;
-            } elseif (!$cart->reminder3_sent && ($current_time - $last_activity_time) >= 172800) {
+            } elseif (!$cart->reminder3_sent && ($current_time - $last_activity_time) >= $reminder3_delay) {
                 $reminder_number = 3;
             }
 
             if ($reminder_number === 0) continue;
 
-            // Optional coupon
+            // Check if coupon should be generated
             $coupon_code = '';
-            if ($reminder_number >= 2) {
-                $coupon_code = AC_Coupon::generate_coupon(10); // 10% discount
+            $coupon_enabled = get_option('ac_coupon_enabled', '1');
+            $coupon_reminders = explode(',', get_option('ac_coupon_reminder', '2,3'));
+            
+            if ($coupon_enabled === '1' && in_array((string)$reminder_number, $coupon_reminders)) {
+                $coupon_type = get_option('ac_coupon_type', 'percent');
+                $coupon_amount = get_option('ac_coupon_amount', 10);
+                $coupon_code = AC_Coupon::generate_coupon($coupon_amount, $coupon_type);
             }
+
+            // Prepare placeholders
+            $placeholders = array(
+                '{customer_name}' => $name,
+                '{restore_link}' => $restore_link,
+                '{coupon_code}' => $coupon_code,
+                '{site_name}' => get_bloginfo('name')
+            );
 
             // Email if email exists
             if (!empty($cart->email)) {
                 $headers = array('Content-Type: text/html; charset=UTF-8');
 
-                ob_start();
-                $cart_items_var = $cart_items;
-                $restore_link_var = $restore_link;
-                $name_var = $name;
-                $coupon_code_var = $coupon_code;
-                include plugin_dir_path(__FILE__) . '../templates/email-template.php';
-                $body = ob_get_clean();
+                // Get email template from settings
+                $email_subject = get_option('ac_email_subject', 'আপনি আপনার কার্ট শেষ করেননি!');
+                $email_template = get_option('ac_email_template', $this->get_default_email_template());
+                
+                // Replace placeholders
+                $subject = str_replace(array_keys($placeholders), array_values($placeholders), $email_subject);
+                $body = str_replace(array_keys($placeholders), array_values($placeholders), $email_template);
+                
+                // Wrap in HTML structure
+                $body = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>' . $body . '</body></html>';
 
-                $subject = "আপনি আপনার কার্ট শেষ করেননি!";
                 wp_mail($cart->email, $subject, $body, $headers);
             }
 
-            // WhatsApp if phone exists
+            // SMS if phone exists
             if (!empty($cart->phone)) {
                 $phone = preg_replace('/[^0-9]/', '', $cart->phone);
-                $message = "হ্যালো $name, আপনার কার্টে পণ্য রয়েছে। শেষ করতে দেখুন: $restore_link";
-                if ($coupon_code) {
-                    $message .= " কুপন: $coupon_code";
-                }
+                
+                // Get SMS template from settings
+                $sms_template = get_option('ac_sms_template', 'হ্যালো {customer_name}, আপনার কার্টে পণ্য রয়েছে। শেষ করতে দেখুন: {restore_link}');
+                
+                // Replace placeholders
+                $message = str_replace(array_keys($placeholders), array_values($placeholders), $sms_template);
+                
                 self::send_message($phone, $message);
             }
 
@@ -70,6 +93,16 @@ class AC_Cron {
             $reminder_field = 'reminder' . $reminder_number . '_sent';
             $wpdb->update($table_name, array($reminder_field => 1, 'coupon_code' => $coupon_code), array('id' => $cart->id), array('%d','%s'), array('%d'));
         }
+    }
+    
+    private function get_default_email_template()
+    {
+        return '<h2>হ্যালো {customer_name},</h2>
+<p>আপনি আপনার কার্টে কিছু প্রোডাক্ট রেখেছেন কিন্তু Checkout শেষ করেননি।</p>
+<p>Checkout করতে নিচের বাটনে ক্লিক করুন:</p>
+<p><a href="{restore_link}" style="background: #0073aa; color: #fff; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Checkout Now</a></p>
+<p><strong>বিশেষ অফার:</strong> আপনার ডিসকাউন্ট কুপন কোড: <strong>{coupon_code}</strong></p>
+<p>ধন্যবাদ,<br>{site_name}</p>';
     }
 
     public static function send_message($phone, $message) {

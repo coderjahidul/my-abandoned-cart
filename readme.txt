@@ -3,7 +3,7 @@ Contributors: coderjahidul
 Tags: woocommerce, abandoned cart, recovery, guest restore, sms reminder, email reminder
 Requires at least: 5.0
 Tested up to: 6.4
-Stable tag: 2.1
+Stable tag: 2.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -23,6 +23,10 @@ My Abandoned Cart helps you recover lost revenue by tracking incomplete orders a
 *   Email Notifications with Cart Summary.
 *   SMS Notifications via BulkSMSBD API.
 *   One-Click Cart Restoration Links.
+*   Customizable Reminder Timing (adjust intervals for each reminder).
+*   WYSIWYG Email Template Editor with placeholder support.
+*   SMS Template Customization.
+*   Configurable Coupon Settings (type, amount, which reminders).
 *   Clean Admin Dashboard to Manage Carts.
 
 == Installation ==
@@ -37,6 +41,12 @@ My Abandoned Cart helps you recover lost revenue by tracking incomplete orders a
 2. Plugin Settings for BulkSMSBD.
 
 == Changelog ==
+
+= 2.2 =
+*   Added Customization Settings: Users can now configure reminder timing, email/SMS templates, and coupon settings through the admin interface.
+*   WYSIWYG Email Template Editor with placeholder support ({customer_name}, {restore_link}, {coupon_code}, {site_name}).
+*   Configurable coupon type (percentage or fixed cart discount) and amount.
+*   Select which reminders (2nd, 3rd, or both) should include coupons.
 
 = 2.1 =
 *   Refined Guest Identification: Phone is now a required identifier, Email is optional.
