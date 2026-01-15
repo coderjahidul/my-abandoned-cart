@@ -15,6 +15,10 @@ require_once plugin_dir_path(__FILE__) . 'includes/class-ac-tracker.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-ac-cron.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-ac-admin.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-ac-coupon.php';
+require_once plugin_dir_path(__FILE__) . 'includes/class-ac-whatsapp.php';
+require_once plugin_dir_path(__FILE__) . 'includes/class-ac-sms-gateway.php';
+require_once plugin_dir_path(__FILE__) . 'includes/class-ac-mailchimp.php';
+require_once plugin_dir_path(__FILE__) . 'includes/class-ac-brevo.php';
 
 register_activation_hook(__FILE__, 'ac_plugin_activate');
 function ac_plugin_activate()

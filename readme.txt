@@ -21,19 +21,22 @@ My Abandoned Cart helps you recover lost revenue by tracking incomplete orders a
 *   3-Step Reminder System (30m, 24h, 48h).
 *   Automatic 10% Coupon Generation for 2nd and 3rd reminders.
 *   Email Notifications with Cart Summary.
-*   SMS Notifications via BulkSMSBD API.
+*   SMS Notifications via multiple gateways (BulkSMSBD, Twilio, Nexmo, SSL Wireless, Banglalink).
+*   WhatsApp Notifications via Twilio or UltraMsg.
+*   Marketing Sync: Automatically sync abandoned cart data to Mailchimp and Brevo.
 *   One-Click Cart Restoration Links.
 *   Customizable Reminder Timing (adjust intervals for each reminder).
 *   WYSIWYG Email Template Editor with placeholder support.
-*   SMS Template Customization.
+*   SMS & WhatsApp Template Customization.
 *   Configurable Coupon Settings (type, amount, which reminders).
 *   Clean Admin Dashboard to Manage Carts.
+*   Unified "Integrations" tab for easy configuration.
 
 == Installation ==
 
 1. Upload the `my-abandoned-cart` folder to the `/wp-content/plugins/` directory.
 2. Activate the plugin through the 'Plugins' menu in WordPress.
-3. Configure your BulkSMSBD credentials under 'In complete order' > 'Settings'.
+3. Configure your integrations (SMS, WhatsApp, Mailchimp, Brevo) under 'In complete order' > 'Settings' > 'Integrations'.
 
 == Screenshots ==
 
@@ -41,6 +44,15 @@ My Abandoned Cart helps you recover lost revenue by tracking incomplete orders a
 2. Plugin Settings for BulkSMSBD.
 
 == Changelog ==
+
+= 2.3 =
+*   New: Unified "Integrations" settings tab.
+*   New: Added support for multiple SMS gateways (Twilio, Nexmo, SSL Wireless, Banglalink).
+*   New: Added WhatsApp integration (Twilio, UltraMsg).
+*   New: Added Mailchimp and Brevo (Sendinblue) marketing sync.
+*   New: Dynamic field visibility in settings for better UX.
+*   New: AJAX connection testing for all integrations.
+*   Improved: Multi-channel reminder system (Email, SMS, WhatsApp).
 
 = 2.2 =
 *   Added Customization Settings: Users can now configure reminder timing, email/SMS templates, and coupon settings through the admin interface.

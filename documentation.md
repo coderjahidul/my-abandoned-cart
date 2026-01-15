@@ -30,25 +30,43 @@ The plugin employs a 3-step reminder system:
 
 ### 4. Notification Channels
 - **Email**: Sends a beautifully formatted HTML email showing the abandoned items and a restore button.
-- **SMS**: Sends a concise text message via **BulkSMSBD** with a direct restoration link.
+- **SMS**: Sends text messages via your preferred gateway (BulkSMSBD, Twilio, Nexmo, etc.).
+- **WhatsApp**: Sends WhatsApp messages via Twilio or UltraMsg.
+
+### 5. Marketing Integration
+- **Mailchimp**: Automatically syncs abandoned cart contacts to your Mailchimp audience.
+- **Brevo**: Syncs contacts to your Brevo lists for targeted marketing campaigns.
 
 ## Customization Settings
 
-The plugin provides extensive customization options through the WordPress admin interface under **In complete order > Settings**:
+### Integrations
+Located under the **Integrations** tab, you can configure:
+
+**Notification Channels**
+- Select which channels to use (Email, SMS, WhatsApp)
+
+**SMS Gateway**
+- Choose from 5 providers: BulkSMSBD, Twilio, Nexmo, SSL Wireless, Banglalink
+- Configure provider-specific API keys and Sender IDs
+- Test connection instantly
+
+**WhatsApp**
+- Choose provider: Twilio or UltraMsg
+- Configure API credentials
+- Customize WhatsApp templates (separate tab)
+
+**Marketing Tools**
+- **Mailchimp**: Enter API Key -> Select Audience -> Enable Auto-Sync
+- **Brevo**: Enter API Key -> Select List -> Enable Auto-Sync
 
 ### Reminder Timing
 - Configure custom delays for each reminder (in minutes)
 - Default: 30 min, 24 hours, 48 hours
-- Adjust based on your business needs
 
-### Email Templates
-- Custom email subject line
-- WYSIWYG editor for email body
-- Supports dynamic placeholders for personalization
-
-### SMS Templates
-- Customizable SMS message text
-- Supports the same placeholders as email
+### Templates
+- **Email**: WYSIWYG editor with placeholders
+- **SMS**: Custom text content
+- **WhatsApp**: Custom message content
 
 ### Coupon Configuration
 - Enable/disable automatic coupon generation
@@ -75,7 +93,8 @@ Access this via the **In complete order** menu. Here you can:
 
 ### Settings
 Located under **In complete order > Settings**:
-- Configure **BulkSMSBD API Key** and **Sender ID** to enable SMS notifications.
+- **Integrations Tab**: Configure all third-party services (SMS, WhatsApp, Mailchimp, Brevo).
+- **Template Tabs**: Customize the content for Email, SMS, and WhatsApp reminders.
 
 ## Technical Details
 

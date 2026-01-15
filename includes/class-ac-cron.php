@@ -58,8 +58,11 @@ class AC_Cron {
                 '{site_name}' => get_bloginfo('name')
             );
 
-            // Email if email exists
-            if (!empty($cart->email)) {
+            // Get active notification channels
+            $channels = explode(',', get_option('ac_notification_channels', 'email,sms'));
+            
+            // Email if email exists and email channel is active
+            if (!empty($cart->email) && in_array('email', $channels)) {
                 $headers = array('Content-Type: text/html; charset=UTF-8');
 
                 // Get email template from settings
@@ -76,9 +79,9 @@ class AC_Cron {
                 wp_mail($cart->email, $subject, $body, $headers);
             }
 
-            // SMS if phone exists
-            if (!empty($cart->phone)) {
-                $phone = preg_replace('/[^0-9]/', '', $cart->phone);
+            // SMS if phone exists and SMS channel is active
+            if (!empty($cart->phone) && in_array('sms', $channels)) {
+                $phone = preg_replace('/[^0-9+]/', '', $cart->phone);
                 
                 // Get SMS template from settings
                 $sms_template = get_option('ac_sms_template', 'হ্যালো {customer_name}, আপনার কার্টে পণ্য রয়েছে। শেষ করতে দেখুন: {restore_link}');
@@ -86,7 +89,22 @@ class AC_Cron {
                 // Replace placeholders
                 $message = str_replace(array_keys($placeholders), array_values($placeholders), $sms_template);
                 
-                self::send_message($phone, $message);
+                // Use new SMS Gateway class
+                AC_SMS_Gateway::send($phone, $message);
+            }
+            
+            // WhatsApp if phone exists and WhatsApp channel is active
+            if (!empty($cart->phone) && in_array('whatsapp', $channels)) {
+                $phone = preg_replace('/[^0-9+]/', '', $cart->phone);
+                
+                // Get WhatsApp template from settings
+                $whatsapp_template = get_option('ac_whatsapp_template', 'হ্যালো {customer_name}, আপনার কার্টে পণ্য রয়েছে। শেষ করতে দেখুন: {restore_link}');
+                
+                // Replace placeholders
+                $message = str_replace(array_keys($placeholders), array_values($placeholders), $whatsapp_template);
+                
+                // Use WhatsApp class
+                AC_WhatsApp::send($phone, $message);
             }
 
             // Mark reminder as sent

@@ -138,6 +138,24 @@ class AC_Tracker
             $data['restore_key'] = wp_generate_uuid4();
             $wpdb->insert($table_name, $data);
         }
+        
+        // Sync to marketing tools if enabled
+        if (!empty($email)) {
+            $sync_data = array(
+                'name' => $name,
+                'phone' => $phone
+            );
+            
+            // Sync to Mailchimp
+            if (get_option('ac_mailchimp_enabled', '0') === '1') {
+                AC_Mailchimp::sync_contact($email, $sync_data);
+            }
+            
+            // Sync to Brevo
+            if (get_option('ac_brevo_enabled', '0') === '1') {
+                AC_Brevo::sync_contact($email, $sync_data);
+            }
+        }
     }
 
 
