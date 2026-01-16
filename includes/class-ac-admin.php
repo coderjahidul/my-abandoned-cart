@@ -630,6 +630,9 @@ class AC_Admin
                             </tr>
                         </table>
                     </div>
+                    <div style="margin-top: 20px;">
+                        <?php submit_button('Save Integration Settings', 'primary', 'submit', false); ?>
+                    </div>
                 </div>
                 
                 <!-- Reminder Timing Tab -->
@@ -666,6 +669,9 @@ class AC_Admin
                             </td>
                         </tr>
                     </table>
+                    <div style="margin-top: 20px;">
+                        <?php submit_button('Save Reminder Settings', 'primary', 'submit', false); ?>
+                    </div>
                 </div>
                 
                 <!-- Email Template Tab -->
@@ -709,6 +715,9 @@ class AC_Admin
                             </td>
                         </tr>
                     </table>
+                    <div style="margin-top: 20px;">
+                        <?php submit_button('Save Email Template', 'primary', 'submit', false); ?>
+                    </div>
                 </div>
                 
                 <!-- SMS Template Tab -->
@@ -735,6 +744,9 @@ class AC_Admin
                             </td>
                         </tr>
                     </table>
+                    <div style="margin-top: 20px;">
+                        <?php submit_button('Save SMS Template', 'primary', 'submit', false); ?>
+                    </div>
                 </div>
                 
                 <!-- WhatsApp Template Tab -->
@@ -761,6 +773,9 @@ class AC_Admin
                             </td>
                         </tr>
                     </table>
+                    <div style="margin-top: 20px;">
+                        <?php submit_button('Save WhatsApp Template', 'primary', 'submit', false); ?>
+                    </div>
                 </div>
                 
                 <!-- Coupon Settings Tab -->
@@ -808,9 +823,10 @@ class AC_Admin
                             </td>
                         </tr>
                     </table>
+                    <div style="margin-top: 20px;">
+                        <?php submit_button('Save Coupon Settings', 'primary', 'submit', false); ?>
+                    </div>
                 </div>
-                
-                <?php submit_button('Save All Settings'); ?>
             </form>
             
             <script>
