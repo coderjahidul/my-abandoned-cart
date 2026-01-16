@@ -71,6 +71,61 @@ class AC_Admin
             'ac-settings',
             array($this, 'settings_page')
         );
+
+        add_submenu_page(
+            'abandoned-carts',
+            'Plugin Info',
+            'Plugin Info',
+            'manage_options',
+            'ac-info',
+            array($this, 'info_page')
+        );
+    }
+
+    public function info_page()
+    {
+        ?>
+        <div class="wrap">
+            <h1>My Abandoned Cart - Plugin Info</h1>
+            
+            <div class="card" style="max-width: 800px; padding: 20px; margin-top: 20px;">
+                <h2>My Abandoned Cart <span style="font-size: 14px; background: #2271b1; color: white; padding: 2px 8px; border-radius: 10px; vertical-align: middle;">v2.0</span></h2>
+                <p><strong>Comprehensive solution for WooCommerce to recover lost sales.</strong></p>
+                <p>Created by <strong>MD Jahidul Islam Sabuz</strong></p>
+                
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
+                
+                <h3>🚀 How It Works</h3>
+                <p>The plugin tracks whenever a user adds items to their cart but fails to complete the purchase. It captures guest data, sends automated notifications, and provides a seamless restoration process.</p>
+                
+                <h3>🔄 Recovery Workflow</h3>
+                <ul>
+                    <li><strong>1st Reminder:</strong> Sent after 30 minutes (Friendly nudge)</li>
+                    <li><strong>2nd Reminder:</strong> Sent after 24 hours (Urgency + 10% Off Coupon)</li>
+                    <li><strong>3rd Reminder:</strong> Sent after 48 hours (Final Reminder + 10% Off Coupon)</li>
+                </ul>
+                
+                <h3>📢 Notification Channels</h3>
+                <ul>
+                    <li><strong>Email:</strong> Beautifully formatted HTML emails with restore links.</li>
+                    <li><strong>SMS:</strong> Integration with BulkSMSBD, Twilio, Nexmo, SSL Wireless, and Banglalink.</li>
+                    <li><strong>WhatsApp:</strong> Send messages via Twilio or UltraMsg.</li>
+                </ul>
+                
+                <h3>📊 Marketing Integration</h3>
+                <ul>
+                    <li><strong>Mailchimp:</strong> Auto-sync abandoned cart contacts to your audience.</li>
+                    <li><strong>Brevo:</strong> Sync contacts to Brevo lists for targeted campaigns.</li>
+                </ul>
+                
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
+                
+                <p>
+                    <a href="https://github.com/coderjahidul/my-abandoned-cart" target="_blank" class="button button-primary">Visit GitHub Repository</a>
+                </p>
+            </div>
+        </div>
+        <?php
     }
 
     public function register_settings()

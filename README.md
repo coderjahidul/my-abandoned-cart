@@ -18,7 +18,9 @@ Complete Production-Ready WooCommerce Abandoned Cart Plugin with Guest Restore &
   - WYSIWYG email template editor with placeholder support
   - SMS & WhatsApp template customization
   - Configurable coupon settings (type, amount, which reminders)
-- **Admin Dashboard**: View and manage all incomplete orders from the WordPress admin.
+- **Admin Dashboard**:
+  - View and manage all incomplete orders.
+  - **Plugin Info Page**: View version, features, and documentation details.
 - **Expanded Integrations**:
   - **SMS Gateways**: BulkSMSBD, Twilio, Nexmo, SSL Wireless, Banglalink.
   - **WhatsApp**: Twilio, UltraMsg.

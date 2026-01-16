@@ -45,6 +45,10 @@ My Abandoned Cart helps you recover lost revenue by tracking incomplete orders a
 
 == Changelog ==
 
+= 2.4 =
+*   New: Added "Plugin Info" page to the admin menu.
+*   UX: Moved "Save" buttons inside each settings tab for better visibility and usability.
+
 = 2.3 =
 *   New: Unified "Integrations" settings tab.
 *   New: Added support for multiple SMS gateways (Twilio, Nexmo, SSL Wireless, Banglalink).
