@@ -15,7 +15,7 @@ class AC_Admin
         add_action('admin_init', array($this, 'register_settings'));
         add_action('admin_init', array('AC_Tracker', 'create_table')); // Ensure table columns exist
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
-        
+
         // AJAX handlers for integration testing
         add_action('wp_ajax_ac_test_sms_connection', array($this, 'ajax_test_sms_connection'));
         add_action('wp_ajax_ac_test_whatsapp_connection', array($this, 'ajax_test_whatsapp_connection'));
@@ -27,9 +27,10 @@ class AC_Admin
 
     public function enqueue_admin_scripts($hook)
     {
-        if (strpos($hook, 'abandoned-carts') === false && strpos($hook, 'ac-dashboard') === false) {
+        if (strpos($hook, 'abandoned-carts') === false && strpos($hook, 'ac-dashboard') === false && strpos($hook, 'ac-info') === false) {
             return;
         }
+        wp_enqueue_style('ac-admin-style', plugins_url('assets/css/ac-admin.css', dirname(__FILE__)), array(), '2.0.0');
         wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '4.4.1', true);
     }
 
@@ -87,41 +88,43 @@ class AC_Admin
         ?>
         <div class="wrap">
             <h1>My Abandoned Cart - Plugin Info</h1>
-            
-            <div class="card" style="max-width: 800px; padding: 20px; margin-top: 20px;">
-                <h2>My Abandoned Cart <span style="font-size: 14px; background: #2271b1; color: white; padding: 2px 8px; border-radius: 10px; vertical-align: middle;">v2.0</span></h2>
+
+            <div class="ac-info-card">
+                <h2>My Abandoned Cart <span class="ac-version-badge">v2.0</span></h2>
                 <p><strong>Comprehensive solution for WooCommerce to recover lost sales.</strong></p>
                 <p>Created by <strong>MD Jahidul Islam Sabuz</strong></p>
-                
-                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
-                
+
+                <hr style="margin: 24px 0; border: 0; border-top: 1px solid #dcdcde;">
+
                 <h3>🚀 How It Works</h3>
-                <p>The plugin tracks whenever a user adds items to their cart but fails to complete the purchase. It captures guest data, sends automated notifications, and provides a seamless restoration process.</p>
-                
+                <p>The plugin tracks whenever a user adds items to their cart but fails to complete the purchase. It captures
+                    guest data, sends automated notifications, and provides a seamless restoration process.</p>
+
                 <h3>🔄 Recovery Workflow</h3>
                 <ul>
                     <li><strong>1st Reminder:</strong> Sent after 30 minutes (Friendly nudge)</li>
                     <li><strong>2nd Reminder:</strong> Sent after 24 hours (Urgency + 10% Off Coupon)</li>
                     <li><strong>3rd Reminder:</strong> Sent after 48 hours (Final Reminder + 10% Off Coupon)</li>
                 </ul>
-                
+
                 <h3>📢 Notification Channels</h3>
                 <ul>
                     <li><strong>Email:</strong> Beautifully formatted HTML emails with restore links.</li>
                     <li><strong>SMS:</strong> Integration with BulkSMSBD, Twilio, Nexmo, SSL Wireless, and Banglalink.</li>
                     <li><strong>WhatsApp:</strong> Send messages via Twilio or UltraMsg.</li>
                 </ul>
-                
+
                 <h3>📊 Marketing Integration</h3>
                 <ul>
                     <li><strong>Mailchimp:</strong> Auto-sync abandoned cart contacts to your audience.</li>
                     <li><strong>Brevo:</strong> Sync contacts to Brevo lists for targeted campaigns.</li>
                 </ul>
-                
+
                 <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
-                
+
                 <p>
-                    <a href="https://github.com/coderjahidul/my-abandoned-cart" target="_blank" class="button button-primary">Visit GitHub Repository</a>
+                    <a href="https://github.com/coderjahidul/my-abandoned-cart" target="_blank"
+                        class="button button-primary">Visit GitHub Repository</a>
                 </p>
             </div>
         </div>
@@ -133,32 +136,32 @@ class AC_Admin
         // SMS Settings (Legacy BulkSMSBD)
         register_setting('ac_settings_group', 'ac_sms_api_key');
         register_setting('ac_settings_group', 'ac_sms_sender_id');
-        
+
         // SMS Gateway Selection
         register_setting('ac_settings_group', 'ac_sms_gateway', array('default' => 'bulksmsbd'));
         register_setting('ac_settings_group', 'ac_sms_enabled', array('default' => '1'));
         register_setting('ac_settings_group', 'ac_sms_test_number');
-        
+
         // Twilio SMS
         register_setting('ac_settings_group', 'ac_twilio_sms_account_sid');
         register_setting('ac_settings_group', 'ac_twilio_sms_auth_token');
         register_setting('ac_settings_group', 'ac_twilio_sms_number');
-        
+
         // Nexmo/Vonage
         register_setting('ac_settings_group', 'ac_nexmo_api_key');
         register_setting('ac_settings_group', 'ac_nexmo_api_secret');
         register_setting('ac_settings_group', 'ac_nexmo_from', array('default' => 'AbandonedCart'));
-        
+
         // SSL Wireless (Bangladesh)
         register_setting('ac_settings_group', 'ac_sslwireless_api_token');
         register_setting('ac_settings_group', 'ac_sslwireless_sid');
         register_setting('ac_settings_group', 'ac_sslwireless_csms_id');
-        
+
         // Banglalink (Bangladesh)
         register_setting('ac_settings_group', 'ac_banglalink_username');
         register_setting('ac_settings_group', 'ac_banglalink_password');
         register_setting('ac_settings_group', 'ac_banglalink_cli');
-        
+
         // WhatsApp Settings
         register_setting('ac_settings_group', 'ac_whatsapp_enabled', array('default' => '0'));
         register_setting('ac_settings_group', 'ac_whatsapp_provider', array('default' => 'twilio'));
@@ -168,35 +171,35 @@ class AC_Admin
         register_setting('ac_settings_group', 'ac_ultramsg_instance_id');
         register_setting('ac_settings_group', 'ac_ultramsg_token');
         register_setting('ac_settings_group', 'ac_whatsapp_test_number');
-        
+
         // Mailchimp Settings
         register_setting('ac_settings_group', 'ac_mailchimp_enabled', array('default' => '0'));
         register_setting('ac_settings_group', 'ac_mailchimp_api_key');
         register_setting('ac_settings_group', 'ac_mailchimp_list_id');
-        
+
         // Brevo Settings
         register_setting('ac_settings_group', 'ac_brevo_enabled', array('default' => '0'));
         register_setting('ac_settings_group', 'ac_brevo_api_key');
         register_setting('ac_settings_group', 'ac_brevo_list_id');
-        
+
         // Notification Channels
         register_setting('ac_settings_group', 'ac_notification_channels', array('default' => 'email,sms'));
-        
+
         // Reminder Timing Settings (in minutes)
         register_setting('ac_settings_group', 'ac_reminder1_delay', array('default' => 30));
         register_setting('ac_settings_group', 'ac_reminder2_delay', array('default' => 1440));
         register_setting('ac_settings_group', 'ac_reminder3_delay', array('default' => 2880));
-        
+
         // Email Template Settings
         register_setting('ac_settings_group', 'ac_email_subject', array('default' => 'আপনি আপনার কার্ট শেষ করেননি!'));
         register_setting('ac_settings_group', 'ac_email_template');
-        
+
         // SMS Template Settings
         register_setting('ac_settings_group', 'ac_sms_template', array('default' => 'হ্যালো {customer_name}, আপনার কার্টে পণ্য রয়েছে। শেষ করতে দেখুন: {restore_link}'));
-        
+
         // WhatsApp Template Settings
         register_setting('ac_settings_group', 'ac_whatsapp_template', array('default' => 'হ্যালো {customer_name}, আপনার কার্টে পণ্য রয়েছে। শেষ করতে দেখুন: {restore_link}'));
-        
+
         // Coupon Settings
         register_setting('ac_settings_group', 'ac_coupon_enabled', array('default' => '1'));
         register_setting('ac_settings_group', 'ac_coupon_type', array('default' => 'percent'));
@@ -239,44 +242,6 @@ class AC_Admin
         <div class="wrap ac-dashboard">
             <h1>Abandoned Cart Analytics</h1>
 
-            <style>
-                .ac-stats-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 20px;
-                    margin: 20px 0;
-                }
-
-                .ac-stat-card {
-                    background: #fff;
-                    padding: 20px;
-                    border-radius: 8px;
-                    border-left: 5px solid #0073aa;
-                    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-                }
-
-                .ac-stat-card h3 {
-                    margin: 0;
-                    color: #666;
-                    font-size: 14px;
-                    text-transform: uppercase;
-                }
-
-                .ac-stat-card .value {
-                    font-size: 28px;
-                    font-weight: bold;
-                    margin-top: 10px;
-                    color: #222;
-                }
-
-                .ac-chart-container {
-                    background: #fff;
-                    padding: 20px;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-                    margin-top: 20px;
-                }
-            </style>
 
             <div class="ac-stats-grid">
                 <div class="ac-stat-card">
@@ -358,21 +323,13 @@ class AC_Admin
     {
         // Get default email template
         $default_email_template = $this->get_default_email_template();
-        
+
         ?>
         <div class="wrap">
             <h1>Abandoned Cart Settings</h1>
-            
-            <style>
-                .ac-tabs { margin: 20px 0; border-bottom: 1px solid #ccc; }
-                .ac-tabs button { background: #f1f1f1; border: 1px solid #ccc; border-bottom: none; padding: 10px 20px; margin-right: 5px; cursor: pointer; }
-                .ac-tabs button.active { background: #fff; font-weight: bold; }
-                .ac-tab-content { display: none; padding: 20px; background: #fff; border: 1px solid #ccc; }
-                .ac-tab-content.active { display: block; }
-                .ac-placeholder-help { background: #f0f8ff; padding: 10px; margin: 10px 0; border-left: 4px solid #0073aa; }
-                .ac-placeholder-help code { background: #e8e8e8; padding: 2px 6px; border-radius: 3px; }
-            </style>
-            
+
+
+
             <div class="ac-tabs">
                 <button class="ac-tab-btn active" data-tab="integrations">Integrations</button>
                 <button class="ac-tab-btn" data-tab="timing">Reminder Timing</button>
@@ -381,24 +338,19 @@ class AC_Admin
                 <button class="ac-tab-btn" data-tab="whatsapp-template">WhatsApp Template</button>
                 <button class="ac-tab-btn" data-tab="coupon">Coupon Settings</button>
             </div>
-            
+
             <form method="post" action="options.php">
                 <?php settings_fields('ac_settings_group'); ?>
                 <?php do_settings_sections('ac_settings_group'); ?>
-                
-                
+
+
                 <!-- Integrations Tab -->
                 <div class="ac-tab-content active" data-tab="integrations">
                     <h2>Integration Settings</h2>
                     <p>Configure notification channels and third-party integrations for abandoned cart recovery.</p>
-                    
-                    <style>
-                        .ac-integration-section { margin: 30px 0; padding: 20px; background: #f9f9f9; border-left: 4px solid #0073aa; }
-                        .ac-integration-section h3 { margin-top: 0; }
-                        .ac-test-btn { margin-left: 10px; }
-                        .ac-gateway-fields { margin-top: 15px; padding: 15px; background: #fff; border: 1px solid #ddd; }
-                    </style>
-                    
+
+
+
                     <!-- Notification Channels -->
                     <div class="ac-integration-section">
                         <h3>📢 Notification Channels</h3>
@@ -407,7 +359,7 @@ class AC_Admin
                             <tr valign="top">
                                 <th scope="row">Active Channels</th>
                                 <td>
-                                    <?php 
+                                    <?php
                                     $channels = get_option('ac_notification_channels', array('email', 'sms'));
                                     if (is_string($channels)) {
                                         $channels = explode(',', $channels);
@@ -424,7 +376,7 @@ class AC_Admin
                             </tr>
                         </table>
                     </div>
-                    
+
                     <!-- SMS Gateway Settings -->
                     <div class="ac-integration-section">
                         <h3>📱 SMS Gateway</h3>
@@ -441,8 +393,10 @@ class AC_Admin
                                 <td>
                                     <select id="ac_sms_gateway" name="ac_sms_gateway" class="regular-text">
                                         <option value="bulksmsbd" <?php selected(get_option('ac_sms_gateway', 'bulksmsbd'), 'bulksmsbd'); ?>>BulkSMSBD (Bangladesh)</option>
-                                        <option value="twilio" <?php selected(get_option('ac_sms_gateway'), 'twilio'); ?>>Twilio</option>
-                                        <option value="nexmo" <?php selected(get_option('ac_sms_gateway'), 'nexmo'); ?>>Nexmo/Vonage</option>
+                                        <option value="twilio" <?php selected(get_option('ac_sms_gateway'), 'twilio'); ?>>Twilio
+                                        </option>
+                                        <option value="nexmo" <?php selected(get_option('ac_sms_gateway'), 'nexmo'); ?>>
+                                            Nexmo/Vonage</option>
                                         <option value="sslwireless" <?php selected(get_option('ac_sms_gateway'), 'sslwireless'); ?>>SSL Wireless (Bangladesh)</option>
                                         <option value="banglalink" <?php selected(get_option('ac_sms_gateway'), 'banglalink'); ?>>Banglalink (Bangladesh)</option>
                                     </select>
@@ -451,106 +405,137 @@ class AC_Admin
                             <tr valign="top">
                                 <th scope="row"><label for="ac_sms_test_number">Test Phone Number</label></th>
                                 <td>
-                                    <input type="text" id="ac_sms_test_number" name="ac_sms_test_number" value="<?php echo esc_attr(get_option('ac_sms_test_number')); ?>" class="regular-text" placeholder="+8801XXXXXXXXX" />
-                                    <button type="button" class="button ac-test-btn" onclick="acTestSMS()">Test Connection</button>
+                                    <input type="text" id="ac_sms_test_number" name="ac_sms_test_number"
+                                        value="<?php echo esc_attr(get_option('ac_sms_test_number')); ?>" class="regular-text"
+                                        placeholder="+8801XXXXXXXXX" />
+                                    <button type="button" class="button ac-test-btn" onclick="acTestSMS()">Test
+                                        Connection</button>
                                     <p class="description">Phone number for testing SMS delivery.</p>
                                     <div id="ac-sms-test-result" style="margin-top:10px;"></div>
                                 </td>
                             </tr>
                         </table>
-                        
+
                         <!-- BulkSMSBD Fields -->
                         <div class="ac-gateway-fields" data-gateway="bulksmsbd">
                             <h4>BulkSMSBD Configuration</h4>
                             <table class="form-table">
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_sms_api_key">API Key</label></th>
-                                    <td><input type="text" id="ac_sms_api_key" name="ac_sms_api_key" value="<?php echo esc_attr(get_option('ac_sms_api_key')); ?>" class="regular-text" /></td>
+                                    <td><input type="text" id="ac_sms_api_key" name="ac_sms_api_key"
+                                            value="<?php echo esc_attr(get_option('ac_sms_api_key')); ?>"
+                                            class="regular-text" /></td>
                                 </tr>
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_sms_sender_id">Sender ID</label></th>
-                                    <td><input type="text" id="ac_sms_sender_id" name="ac_sms_sender_id" value="<?php echo esc_attr(get_option('ac_sms_sender_id')); ?>" class="regular-text" /></td>
+                                    <td><input type="text" id="ac_sms_sender_id" name="ac_sms_sender_id"
+                                            value="<?php echo esc_attr(get_option('ac_sms_sender_id')); ?>"
+                                            class="regular-text" /></td>
                                 </tr>
                             </table>
                         </div>
-                        
+
                         <!-- Twilio SMS Fields -->
                         <div class="ac-gateway-fields" data-gateway="twilio" style="display:none;">
                             <h4>Twilio SMS Configuration</h4>
                             <table class="form-table">
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_twilio_sms_account_sid">Account SID</label></th>
-                                    <td><input type="text" id="ac_twilio_sms_account_sid" name="ac_twilio_sms_account_sid" value="<?php echo esc_attr(get_option('ac_twilio_sms_account_sid')); ?>" class="regular-text" /></td>
+                                    <td><input type="text" id="ac_twilio_sms_account_sid" name="ac_twilio_sms_account_sid"
+                                            value="<?php echo esc_attr(get_option('ac_twilio_sms_account_sid')); ?>"
+                                            class="regular-text" /></td>
                                 </tr>
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_twilio_sms_auth_token">Auth Token</label></th>
-                                    <td><input type="password" id="ac_twilio_sms_auth_token" name="ac_twilio_sms_auth_token" value="<?php echo esc_attr(get_option('ac_twilio_sms_auth_token')); ?>" class="regular-text" /></td>
+                                    <td><input type="password" id="ac_twilio_sms_auth_token" name="ac_twilio_sms_auth_token"
+                                            value="<?php echo esc_attr(get_option('ac_twilio_sms_auth_token')); ?>"
+                                            class="regular-text" /></td>
                                 </tr>
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_twilio_sms_number">From Number</label></th>
-                                    <td><input type="text" id="ac_twilio_sms_number" name="ac_twilio_sms_number" value="<?php echo esc_attr(get_option('ac_twilio_sms_number')); ?>" class="regular-text" placeholder="+1234567890" /></td>
+                                    <td><input type="text" id="ac_twilio_sms_number" name="ac_twilio_sms_number"
+                                            value="<?php echo esc_attr(get_option('ac_twilio_sms_number')); ?>"
+                                            class="regular-text" placeholder="+1234567890" /></td>
                                 </tr>
                             </table>
                         </div>
-                        
+
                         <!-- Nexmo Fields -->
                         <div class="ac-gateway-fields" data-gateway="nexmo" style="display:none;">
                             <h4>Nexmo/Vonage Configuration</h4>
                             <table class="form-table">
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_nexmo_api_key">API Key</label></th>
-                                    <td><input type="text" id="ac_nexmo_api_key" name="ac_nexmo_api_key" value="<?php echo esc_attr(get_option('ac_nexmo_api_key')); ?>" class="regular-text" /></td>
+                                    <td><input type="text" id="ac_nexmo_api_key" name="ac_nexmo_api_key"
+                                            value="<?php echo esc_attr(get_option('ac_nexmo_api_key')); ?>"
+                                            class="regular-text" /></td>
                                 </tr>
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_nexmo_api_secret">API Secret</label></th>
-                                    <td><input type="password" id="ac_nexmo_api_secret" name="ac_nexmo_api_secret" value="<?php echo esc_attr(get_option('ac_nexmo_api_secret')); ?>" class="regular-text" /></td>
+                                    <td><input type="password" id="ac_nexmo_api_secret" name="ac_nexmo_api_secret"
+                                            value="<?php echo esc_attr(get_option('ac_nexmo_api_secret')); ?>"
+                                            class="regular-text" /></td>
                                 </tr>
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_nexmo_from">From Name</label></th>
-                                    <td><input type="text" id="ac_nexmo_from" name="ac_nexmo_from" value="<?php echo esc_attr(get_option('ac_nexmo_from', 'AbandonedCart')); ?>" class="regular-text" /></td>
+                                    <td><input type="text" id="ac_nexmo_from" name="ac_nexmo_from"
+                                            value="<?php echo esc_attr(get_option('ac_nexmo_from', 'AbandonedCart')); ?>"
+                                            class="regular-text" /></td>
                                 </tr>
                             </table>
                         </div>
-                        
+
                         <!-- SSL Wireless Fields -->
                         <div class="ac-gateway-fields" data-gateway="sslwireless" style="display:none;">
                             <h4>SSL Wireless Configuration</h4>
                             <table class="form-table">
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_sslwireless_api_token">API Token</label></th>
-                                    <td><input type="text" id="ac_sslwireless_api_token" name="ac_sslwireless_api_token" value="<?php echo esc_attr(get_option('ac_sslwireless_api_token')); ?>" class="regular-text" /></td>
+                                    <td><input type="text" id="ac_sslwireless_api_token" name="ac_sslwireless_api_token"
+                                            value="<?php echo esc_attr(get_option('ac_sslwireless_api_token')); ?>"
+                                            class="regular-text" /></td>
                                 </tr>
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_sslwireless_sid">SID</label></th>
-                                    <td><input type="text" id="ac_sslwireless_sid" name="ac_sslwireless_sid" value="<?php echo esc_attr(get_option('ac_sslwireless_sid')); ?>" class="regular-text" /></td>
+                                    <td><input type="text" id="ac_sslwireless_sid" name="ac_sslwireless_sid"
+                                            value="<?php echo esc_attr(get_option('ac_sslwireless_sid')); ?>"
+                                            class="regular-text" /></td>
                                 </tr>
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_sslwireless_csms_id">CSMS ID</label></th>
-                                    <td><input type="text" id="ac_sslwireless_csms_id" name="ac_sslwireless_csms_id" value="<?php echo esc_attr(get_option('ac_sslwireless_csms_id')); ?>" class="regular-text" /></td>
+                                    <td><input type="text" id="ac_sslwireless_csms_id" name="ac_sslwireless_csms_id"
+                                            value="<?php echo esc_attr(get_option('ac_sslwireless_csms_id')); ?>"
+                                            class="regular-text" /></td>
                                 </tr>
                             </table>
                         </div>
-                        
+
                         <!-- Banglalink Fields -->
                         <div class="ac-gateway-fields" data-gateway="banglalink" style="display:none;">
                             <h4>Banglalink Configuration</h4>
                             <table class="form-table">
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_banglalink_username">Username</label></th>
-                                    <td><input type="text" id="ac_banglalink_username" name="ac_banglalink_username" value="<?php echo esc_attr(get_option('ac_banglalink_username')); ?>" class="regular-text" /></td>
+                                    <td><input type="text" id="ac_banglalink_username" name="ac_banglalink_username"
+                                            value="<?php echo esc_attr(get_option('ac_banglalink_username')); ?>"
+                                            class="regular-text" /></td>
                                 </tr>
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_banglalink_password">Password</label></th>
-                                    <td><input type="password" id="ac_banglalink_password" name="ac_banglalink_password" value="<?php echo esc_attr(get_option('ac_banglalink_password')); ?>" class="regular-text" /></td>
+                                    <td><input type="password" id="ac_banglalink_password" name="ac_banglalink_password"
+                                            value="<?php echo esc_attr(get_option('ac_banglalink_password')); ?>"
+                                            class="regular-text" /></td>
                                 </tr>
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_banglalink_cli">CLI</label></th>
-                                    <td><input type="text" id="ac_banglalink_cli" name="ac_banglalink_cli" value="<?php echo esc_attr(get_option('ac_banglalink_cli')); ?>" class="regular-text" /></td>
+                                    <td><input type="text" id="ac_banglalink_cli" name="ac_banglalink_cli"
+                                            value="<?php echo esc_attr(get_option('ac_banglalink_cli')); ?>"
+                                            class="regular-text" /></td>
                                 </tr>
                             </table>
                         </div>
                     </div>
-                    
+
                     <!-- WhatsApp Settings -->
                     <div class="ac-integration-section">
                         <h3>💬 WhatsApp</h3>
@@ -574,52 +559,65 @@ class AC_Admin
                             <tr valign="top">
                                 <th scope="row"><label for="ac_whatsapp_test_number">Test WhatsApp Number</label></th>
                                 <td>
-                                    <input type="text" id="ac_whatsapp_test_number" name="ac_whatsapp_test_number" value="<?php echo esc_attr(get_option('ac_whatsapp_test_number')); ?>" class="regular-text" placeholder="+8801XXXXXXXXX" />
-                                    <button type="button" class="button ac-test-btn" onclick="acTestWhatsApp()">Test Connection</button>
+                                    <input type="text" id="ac_whatsapp_test_number" name="ac_whatsapp_test_number"
+                                        value="<?php echo esc_attr(get_option('ac_whatsapp_test_number')); ?>"
+                                        class="regular-text" placeholder="+8801XXXXXXXXX" />
+                                    <button type="button" class="button ac-test-btn" onclick="acTestWhatsApp()">Test
+                                        Connection</button>
                                     <p class="description">WhatsApp number for testing.</p>
                                     <div id="ac-whatsapp-test-result" style="margin-top:10px;"></div>
                                 </td>
                             </tr>
                         </table>
-                        
+
                         <!-- Twilio WhatsApp Fields -->
                         <div class="ac-whatsapp-fields" data-provider="twilio">
                             <h4>Twilio WhatsApp Configuration</h4>
                             <table class="form-table">
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_twilio_account_sid">Account SID</label></th>
-                                    <td><input type="text" id="ac_twilio_account_sid" name="ac_twilio_account_sid" value="<?php echo esc_attr(get_option('ac_twilio_account_sid')); ?>" class="regular-text" /></td>
+                                    <td><input type="text" id="ac_twilio_account_sid" name="ac_twilio_account_sid"
+                                            value="<?php echo esc_attr(get_option('ac_twilio_account_sid')); ?>"
+                                            class="regular-text" /></td>
                                 </tr>
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_twilio_auth_token">Auth Token</label></th>
-                                    <td><input type="password" id="ac_twilio_auth_token" name="ac_twilio_auth_token" value="<?php echo esc_attr(get_option('ac_twilio_auth_token')); ?>" class="regular-text" /></td>
+                                    <td><input type="password" id="ac_twilio_auth_token" name="ac_twilio_auth_token"
+                                            value="<?php echo esc_attr(get_option('ac_twilio_auth_token')); ?>"
+                                            class="regular-text" /></td>
                                 </tr>
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_twilio_whatsapp_number">WhatsApp Number</label></th>
                                     <td>
-                                        <input type="text" id="ac_twilio_whatsapp_number" name="ac_twilio_whatsapp_number" value="<?php echo esc_attr(get_option('ac_twilio_whatsapp_number')); ?>" class="regular-text" placeholder="whatsapp:+14155238886" />
+                                        <input type="text" id="ac_twilio_whatsapp_number" name="ac_twilio_whatsapp_number"
+                                            value="<?php echo esc_attr(get_option('ac_twilio_whatsapp_number')); ?>"
+                                            class="regular-text" placeholder="whatsapp:+14155238886" />
                                         <p class="description">Format: whatsapp:+14155238886</p>
                                     </td>
                                 </tr>
                             </table>
                         </div>
-                        
+
                         <!-- UltraMsg Fields -->
                         <div class="ac-whatsapp-fields" data-provider="ultramsg" style="display:none;">
                             <h4>UltraMsg Configuration</h4>
                             <table class="form-table">
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_ultramsg_instance_id">Instance ID</label></th>
-                                    <td><input type="text" id="ac_ultramsg_instance_id" name="ac_ultramsg_instance_id" value="<?php echo esc_attr(get_option('ac_ultramsg_instance_id')); ?>" class="regular-text" /></td>
+                                    <td><input type="text" id="ac_ultramsg_instance_id" name="ac_ultramsg_instance_id"
+                                            value="<?php echo esc_attr(get_option('ac_ultramsg_instance_id')); ?>"
+                                            class="regular-text" /></td>
                                 </tr>
                                 <tr valign="top">
                                     <th scope="row"><label for="ac_ultramsg_token">Token</label></th>
-                                    <td><input type="text" id="ac_ultramsg_token" name="ac_ultramsg_token" value="<?php echo esc_attr(get_option('ac_ultramsg_token')); ?>" class="regular-text" /></td>
+                                    <td><input type="text" id="ac_ultramsg_token" name="ac_ultramsg_token"
+                                            value="<?php echo esc_attr(get_option('ac_ultramsg_token')); ?>"
+                                            class="regular-text" /></td>
                                 </tr>
                             </table>
                         </div>
                     </div>
-                    
+
                     <!-- Mailchimp Settings -->
                     <div class="ac-integration-section">
                         <h3>📧 Mailchimp</h3>
@@ -634,8 +632,11 @@ class AC_Admin
                             <tr valign="top">
                                 <th scope="row"><label for="ac_mailchimp_api_key">API Key</label></th>
                                 <td>
-                                    <input type="text" id="ac_mailchimp_api_key" name="ac_mailchimp_api_key" value="<?php echo esc_attr(get_option('ac_mailchimp_api_key')); ?>" class="regular-text" />
-                                    <button type="button" class="button ac-test-btn" onclick="acTestMailchimp()">Test Connection</button>
+                                    <input type="text" id="ac_mailchimp_api_key" name="ac_mailchimp_api_key"
+                                        value="<?php echo esc_attr(get_option('ac_mailchimp_api_key')); ?>"
+                                        class="regular-text" />
+                                    <button type="button" class="button ac-test-btn" onclick="acTestMailchimp()">Test
+                                        Connection</button>
                                     <button type="button" class="button" onclick="acLoadMailchimpLists()">Load Lists</button>
                                     <p class="description">Get your API key from Mailchimp account settings.</p>
                                     <div id="ac-mailchimp-test-result" style="margin-top:10px;"></div>
@@ -652,7 +653,7 @@ class AC_Admin
                             </tr>
                         </table>
                     </div>
-                    
+
                     <!-- Brevo Settings -->
                     <div class="ac-integration-section">
                         <h3>📨 Brevo (Sendinblue)</h3>
@@ -667,8 +668,10 @@ class AC_Admin
                             <tr valign="top">
                                 <th scope="row"><label for="ac_brevo_api_key">API Key</label></th>
                                 <td>
-                                    <input type="text" id="ac_brevo_api_key" name="ac_brevo_api_key" value="<?php echo esc_attr(get_option('ac_brevo_api_key')); ?>" class="regular-text" />
-                                    <button type="button" class="button ac-test-btn" onclick="acTestBrevo()">Test Connection</button>
+                                    <input type="text" id="ac_brevo_api_key" name="ac_brevo_api_key"
+                                        value="<?php echo esc_attr(get_option('ac_brevo_api_key')); ?>" class="regular-text" />
+                                    <button type="button" class="button ac-test-btn" onclick="acTestBrevo()">Test
+                                        Connection</button>
                                     <button type="button" class="button" onclick="acLoadBrevoLists()">Load Lists</button>
                                     <p class="description">Get your API key from Brevo account settings.</p>
                                     <div id="ac-brevo-test-result" style="margin-top:10px;"></div>
@@ -689,18 +692,19 @@ class AC_Admin
                         <?php submit_button('Save Integration Settings', 'primary', 'submit', false); ?>
                     </div>
                 </div>
-                
+
                 <!-- Reminder Timing Tab -->
                 <div class="ac-tab-content" data-tab="timing">
                     <h2>Reminder Timing</h2>
                     <p>Set custom delays for each reminder (in minutes).</p>
-                    
+
                     <table class="form-table">
                         <tr valign="top">
                             <th scope="row"><label for="ac_reminder1_delay">1st Reminder Delay</label></th>
                             <td>
                                 <input type="number" id="ac_reminder1_delay" name="ac_reminder1_delay"
-                                    value="<?php echo esc_attr(get_option('ac_reminder1_delay', 30)); ?>" class="small-text" min="1" />
+                                    value="<?php echo esc_attr(get_option('ac_reminder1_delay', 30)); ?>" class="small-text"
+                                    min="1" />
                                 <span>minutes</span>
                                 <p class="description">Default: 30 minutes (0.5 hours)</p>
                             </td>
@@ -709,7 +713,8 @@ class AC_Admin
                             <th scope="row"><label for="ac_reminder2_delay">2nd Reminder Delay</label></th>
                             <td>
                                 <input type="number" id="ac_reminder2_delay" name="ac_reminder2_delay"
-                                    value="<?php echo esc_attr(get_option('ac_reminder2_delay', 1440)); ?>" class="small-text" min="1" />
+                                    value="<?php echo esc_attr(get_option('ac_reminder2_delay', 1440)); ?>" class="small-text"
+                                    min="1" />
                                 <span>minutes</span>
                                 <p class="description">Default: 1440 minutes (24 hours)</p>
                             </td>
@@ -718,7 +723,8 @@ class AC_Admin
                             <th scope="row"><label for="ac_reminder3_delay">3rd Reminder Delay</label></th>
                             <td>
                                 <input type="number" id="ac_reminder3_delay" name="ac_reminder3_delay"
-                                    value="<?php echo esc_attr(get_option('ac_reminder3_delay', 2880)); ?>" class="small-text" min="1" />
+                                    value="<?php echo esc_attr(get_option('ac_reminder3_delay', 2880)); ?>" class="small-text"
+                                    min="1" />
                                 <span>minutes</span>
                                 <p class="description">Default: 2880 minutes (48 hours)</p>
                             </td>
@@ -728,12 +734,12 @@ class AC_Admin
                         <?php submit_button('Save Reminder Settings', 'primary', 'submit', false); ?>
                     </div>
                 </div>
-                
+
                 <!-- Email Template Tab -->
                 <div class="ac-tab-content" data-tab="email">
                     <h2>Email Template</h2>
                     <p>Customize the email subject and body sent to customers.</p>
-                    
+
                     <div class="ac-placeholder-help">
                         <strong>Available Placeholders:</strong><br>
                         <code>{customer_name}</code> - Customer's name<br>
@@ -741,13 +747,13 @@ class AC_Admin
                         <code>{coupon_code}</code> - Generated coupon code (if applicable)<br>
                         <code>{site_name}</code> - Your site name
                     </div>
-                    
+
                     <table class="form-table">
                         <tr valign="top">
                             <th scope="row"><label for="ac_email_subject">Email Subject</label></th>
                             <td>
                                 <input type="text" id="ac_email_subject" name="ac_email_subject"
-                                    value="<?php echo esc_attr(get_option('ac_email_subject', 'আপনি আপনার কার্ট শেষ করেননি!')); ?>" 
+                                    value="<?php echo esc_attr(get_option('ac_email_subject', 'আপনি আপনার কার্ট শেষ করেননি!')); ?>"
                                     class="large-text" />
                             </td>
                         </tr>
@@ -774,12 +780,12 @@ class AC_Admin
                         <?php submit_button('Save Email Template', 'primary', 'submit', false); ?>
                     </div>
                 </div>
-                
+
                 <!-- SMS Template Tab -->
                 <div class="ac-tab-content" data-tab="sms-template">
                     <h2>SMS Template</h2>
                     <p>Customize the SMS message sent to customers.</p>
-                    
+
                     <div class="ac-placeholder-help">
                         <strong>Available Placeholders:</strong><br>
                         <code>{customer_name}</code> - Customer's name<br>
@@ -787,13 +793,13 @@ class AC_Admin
                         <code>{coupon_code}</code> - Generated coupon code (if applicable)<br>
                         <code>{site_name}</code> - Your site name
                     </div>
-                    
+
                     <table class="form-table">
                         <tr valign="top">
                             <th scope="row"><label for="ac_sms_template">SMS Message</label></th>
                             <td>
-                                <textarea id="ac_sms_template" name="ac_sms_template" rows="5" class="large-text"><?php 
-                                    echo esc_textarea(get_option('ac_sms_template', 'হ্যালো {customer_name}, আপনার কার্টে পণ্য রয়েছে। শেষ করতে দেখুন: {restore_link}')); 
+                                <textarea id="ac_sms_template" name="ac_sms_template" rows="5" class="large-text"><?php
+                                echo esc_textarea(get_option('ac_sms_template', 'হ্যালো {customer_name}, আপনার কার্টে পণ্য রয়েছে। শেষ করতে দেখুন: {restore_link}'));
                                 ?></textarea>
                                 <p class="description">Keep SMS messages concise. Use placeholders for dynamic content.</p>
                             </td>
@@ -803,12 +809,12 @@ class AC_Admin
                         <?php submit_button('Save SMS Template', 'primary', 'submit', false); ?>
                     </div>
                 </div>
-                
+
                 <!-- WhatsApp Template Tab -->
                 <div class="ac-tab-content" data-tab="whatsapp-template">
                     <h2>WhatsApp Template</h2>
                     <p>Customize the WhatsApp message sent to customers.</p>
-                    
+
                     <div class="ac-placeholder-help">
                         <strong>Available Placeholders:</strong><br>
                         <code>{customer_name}</code> - Customer's name<br>
@@ -816,13 +822,13 @@ class AC_Admin
                         <code>{coupon_code}</code> - Generated coupon code (if applicable)<br>
                         <code>{site_name}</code> - Your site name
                     </div>
-                    
+
                     <table class="form-table">
                         <tr valign="top">
                             <th scope="row"><label for="ac_whatsapp_template">WhatsApp Message</label></th>
                             <td>
-                                <textarea id="ac_whatsapp_template" name="ac_whatsapp_template" rows="5" class="large-text"><?php 
-                                    echo esc_textarea(get_option('ac_whatsapp_template', 'হ্যালো {customer_name}, আপনার কার্টে পণ্য রয়েছে। শেষ করতে দেখুন: {restore_link}')); 
+                                <textarea id="ac_whatsapp_template" name="ac_whatsapp_template" rows="5" class="large-text"><?php
+                                echo esc_textarea(get_option('ac_whatsapp_template', 'হ্যালো {customer_name}, আপনার কার্টে পণ্য রয়েছে। শেষ করতে দেখুন: {restore_link}'));
                                 ?></textarea>
                                 <p class="description">Keep WhatsApp messages concise. Use placeholders for dynamic content.</p>
                             </td>
@@ -832,18 +838,17 @@ class AC_Admin
                         <?php submit_button('Save WhatsApp Template', 'primary', 'submit', false); ?>
                     </div>
                 </div>
-                
+
                 <!-- Coupon Settings Tab -->
                 <div class="ac-tab-content" data-tab="coupon">
                     <h2>Coupon Settings</h2>
                     <p>Configure automatic coupon generation for reminders.</p>
-                    
+
                     <table class="form-table">
                         <tr valign="top">
                             <th scope="row"><label for="ac_coupon_enabled">Enable Coupons</label></th>
                             <td>
-                                <input type="checkbox" id="ac_coupon_enabled" name="ac_coupon_enabled" value="1" 
-                                    <?php checked(get_option('ac_coupon_enabled', '1'), '1'); ?> />
+                                <input type="checkbox" id="ac_coupon_enabled" name="ac_coupon_enabled" value="1" <?php checked(get_option('ac_coupon_enabled', '1'), '1'); ?> />
                                 <label for="ac_coupon_enabled">Generate coupons for reminders</label>
                             </td>
                         </tr>
@@ -860,19 +865,19 @@ class AC_Admin
                             <th scope="row"><label for="ac_coupon_amount">Discount Amount</label></th>
                             <td>
                                 <input type="number" id="ac_coupon_amount" name="ac_coupon_amount"
-                                    value="<?php echo esc_attr(get_option('ac_coupon_amount', 10)); ?>" 
-                                    class="small-text" min="0" step="0.01" />
-                                <p class="description">For percentage: enter 10 for 10%. For fixed: enter amount in your currency.</p>
+                                    value="<?php echo esc_attr(get_option('ac_coupon_amount', 10)); ?>" class="small-text"
+                                    min="0" step="0.01" />
+                                <p class="description">For percentage: enter 10 for 10%. For fixed: enter amount in your
+                                    currency.</p>
                             </td>
                         </tr>
                         <tr valign="top">
                             <th scope="row"><label for="ac_coupon_reminder">Include Coupon In</label></th>
                             <td>
-                                <label><input type="checkbox" name="ac_coupon_reminder[]" value="2" 
-                                    <?php $reminders = explode(',', get_option('ac_coupon_reminder', '2,3')); checked(in_array('2', $reminders), true); ?> /> 
+                                <label><input type="checkbox" name="ac_coupon_reminder[]" value="2" <?php $reminders = explode(',', get_option('ac_coupon_reminder', '2,3'));
+                                checked(in_array('2', $reminders), true); ?> />
                                     2nd Reminder</label><br>
-                                <label><input type="checkbox" name="ac_coupon_reminder[]" value="3" 
-                                    <?php checked(in_array('3', $reminders), true); ?> /> 
+                                <label><input type="checkbox" name="ac_coupon_reminder[]" value="3" <?php checked(in_array('3', $reminders), true); ?> />
                                     3rd Reminder</label>
                                 <p class="description">Select which reminders should include a coupon code.</p>
                             </td>
@@ -883,137 +888,137 @@ class AC_Admin
                     </div>
                 </div>
             </form>
-            
+
             <script>
-                jQuery(document).ready(function($) {
+                jQuery(document).ready(function ($) {
                     // Tab switching
-                    $('.ac-tab-btn').on('click', function() {
+                    $('.ac-tab-btn').on('click', function () {
                         var tab = $(this).data('tab');
                         $('.ac-tab-btn').removeClass('active');
                         $('.ac-tab-content').removeClass('active');
                         $(this).addClass('active');
                         $('.ac-tab-content[data-tab="' + tab + '"]').addClass('active');
                     });
-                    
+
                     // SMS Gateway field visibility
                     function toggleSMSGatewayFields() {
                         var gateway = $('#ac_sms_gateway').val();
                         $('.ac-gateway-fields').hide();
                         $('.ac-gateway-fields[data-gateway="' + gateway + '"]').show();
                     }
-                    
+
                     $('#ac_sms_gateway').on('change', toggleSMSGatewayFields);
                     toggleSMSGatewayFields(); // Initialize on load
-                    
+
                     // WhatsApp Provider field visibility
                     function toggleWhatsAppFields() {
                         var provider = $('#ac_whatsapp_provider').val();
                         $('.ac-whatsapp-fields').hide();
                         $('.ac-whatsapp-fields[data-provider="' + provider + '"]').show();
                     }
-                    
+
                     $('#ac_whatsapp_provider').on('change', toggleWhatsAppFields);
                     toggleWhatsAppFields(); // Initialize on load
                 });
-                
+
                 // AJAX Test Functions
                 function acTestSMS() {
                     jQuery.ajax({
                         url: ajaxurl,
                         type: 'POST',
                         data: { action: 'ac_test_sms_connection' },
-                        beforeSend: function() {
+                        beforeSend: function () {
                             jQuery('#ac-sms-test-result').html('<span style="color:#0073aa;">Testing...</span>');
                         },
-                        success: function(response) {
+                        success: function (response) {
                             if (response.success) {
                                 jQuery('#ac-sms-test-result').html('<span style="color:#46b450;">✓ ' + response.data.message + '</span>');
                             } else {
                                 jQuery('#ac-sms-test-result').html('<span style="color:#dc3232;">✗ ' + response.data.message + '</span>');
                             }
                         },
-                        error: function() {
+                        error: function () {
                             jQuery('#ac-sms-test-result').html('<span style="color:#dc3232;">✗ Connection failed</span>');
                         }
                     });
                 }
-                
+
                 function acTestWhatsApp() {
                     jQuery.ajax({
                         url: ajaxurl,
                         type: 'POST',
                         data: { action: 'ac_test_whatsapp_connection' },
-                        beforeSend: function() {
+                        beforeSend: function () {
                             jQuery('#ac-whatsapp-test-result').html('<span style="color:#0073aa;">Testing...</span>');
                         },
-                        success: function(response) {
+                        success: function (response) {
                             if (response.success) {
                                 jQuery('#ac-whatsapp-test-result').html('<span style="color:#46b450;">✓ ' + response.data.message + '</span>');
                             } else {
                                 jQuery('#ac-whatsapp-test-result').html('<span style="color:#dc3232;">✗ ' + response.data.message + '</span>');
                             }
                         },
-                        error: function() {
+                        error: function () {
                             jQuery('#ac-whatsapp-test-result').html('<span style="color:#dc3232;">✗ Connection failed</span>');
                         }
                     });
                 }
-                
+
                 function acTestMailchimp() {
                     jQuery.ajax({
                         url: ajaxurl,
                         type: 'POST',
                         data: { action: 'ac_test_mailchimp_connection' },
-                        beforeSend: function() {
+                        beforeSend: function () {
                             jQuery('#ac-mailchimp-test-result').html('<span style="color:#0073aa;">Testing...</span>');
                         },
-                        success: function(response) {
+                        success: function (response) {
                             if (response.success) {
                                 jQuery('#ac-mailchimp-test-result').html('<span style="color:#46b450;">✓ ' + response.data.message + '</span>');
                             } else {
                                 jQuery('#ac-mailchimp-test-result').html('<span style="color:#dc3232;">✗ ' + response.data.message + '</span>');
                             }
                         },
-                        error: function() {
+                        error: function () {
                             jQuery('#ac-mailchimp-test-result').html('<span style="color:#dc3232;">✗ Connection failed</span>');
                         }
                     });
                 }
-                
+
                 function acTestBrevo() {
                     jQuery.ajax({
                         url: ajaxurl,
                         type: 'POST',
                         data: { action: 'ac_test_brevo_connection' },
-                        beforeSend: function() {
+                        beforeSend: function () {
                             jQuery('#ac-brevo-test-result').html('<span style="color:#0073aa;">Testing...</span>');
                         },
-                        success: function(response) {
+                        success: function (response) {
                             if (response.success) {
                                 jQuery('#ac-brevo-test-result').html('<span style="color:#46b450;">✓ ' + response.data.message + '</span>');
                             } else {
                                 jQuery('#ac-brevo-test-result').html('<span style="color:#dc3232;">✗ ' + response.data.message + '</span>');
                             }
                         },
-                        error: function() {
+                        error: function () {
                             jQuery('#ac-brevo-test-result').html('<span style="color:#dc3232;">✗ Connection failed</span>');
                         }
                     });
                 }
-                
+
                 function acLoadMailchimpLists() {
                     jQuery.ajax({
                         url: ajaxurl,
                         type: 'POST',
                         data: { action: 'ac_get_mailchimp_lists' },
-                        beforeSend: function() {
+                        beforeSend: function () {
                             jQuery('#ac-mailchimp-test-result').html('<span style="color:#0073aa;">Loading lists...</span>');
                         },
-                        success: function(response) {
+                        success: function (response) {
                             if (response.success) {
                                 var select = jQuery('#ac_mailchimp_list_id');
                                 select.empty().append('<option value="">Select a list...</option>');
-                                jQuery.each(response.data.lists, function(i, list) {
+                                jQuery.each(response.data.lists, function (i, list) {
                                     select.append('<option value="' + list.id + '">' + list.name + '</option>');
                                 });
                                 jQuery('#ac-mailchimp-test-result').html('<span style="color:#46b450;">✓ Lists loaded</span>');
@@ -1021,25 +1026,25 @@ class AC_Admin
                                 jQuery('#ac-mailchimp-test-result').html('<span style="color:#dc3232;">✗ ' + response.data.message + '</span>');
                             }
                         },
-                        error: function() {
+                        error: function () {
                             jQuery('#ac-mailchimp-test-result').html('<span style="color:#dc3232;">✗ Failed to load lists</span>');
                         }
                     });
                 }
-                
+
                 function acLoadBrevoLists() {
                     jQuery.ajax({
                         url: ajaxurl,
                         type: 'POST',
                         data: { action: 'ac_get_brevo_lists' },
-                        beforeSend: function() {
+                        beforeSend: function () {
                             jQuery('#ac-brevo-test-result').html('<span style="color:#0073aa;">Loading lists...</span>');
                         },
-                        success: function(response) {
+                        success: function (response) {
                             if (response.success) {
                                 var select = jQuery('#ac_brevo_list_id');
                                 select.empty().append('<option value="">Select a list...</option>');
-                                jQuery.each(response.data.lists, function(i, list) {
+                                jQuery.each(response.data.lists, function (i, list) {
                                     select.append('<option value="' + list.id + '">' + list.name + '</option>');
                                 });
                                 jQuery('#ac-brevo-test-result').html('<span style="color:#46b450;">✓ Lists loaded</span>');
@@ -1047,7 +1052,7 @@ class AC_Admin
                                 jQuery('#ac-brevo-test-result').html('<span style="color:#dc3232;">✗ ' + response.data.message + '</span>');
                             }
                         },
-                        error: function() {
+                        error: function () {
                             jQuery('#ac-brevo-test-result').html('<span style="color:#dc3232;">✗ Failed to load lists</span>');
                         }
                     });
@@ -1056,7 +1061,7 @@ class AC_Admin
         </div>
         <?php
     }
-    
+
     private function get_default_email_template()
     {
         return '<h2>হ্যালো {customer_name},</h2>
@@ -1066,9 +1071,10 @@ class AC_Admin
 <p><strong>বিশেষ অফার:</strong> আপনার ডিসকাউন্ট কুপন কোড: <strong>{coupon_code}</strong></p>
 <p>ধন্যবাদ,<br>{site_name}</p>';
     }
-    
+
     // AJAX Handlers for Integration Testing
-    public function ajax_test_sms_connection() {
+    public function ajax_test_sms_connection()
+    {
         $result = AC_SMS_Gateway::test_connection();
         if ($result['success']) {
             wp_send_json_success($result);
@@ -1076,8 +1082,9 @@ class AC_Admin
             wp_send_json_error($result);
         }
     }
-    
-    public function ajax_test_whatsapp_connection() {
+
+    public function ajax_test_whatsapp_connection()
+    {
         $result = AC_WhatsApp::test_connection();
         if ($result['success']) {
             wp_send_json_success($result);
@@ -1085,8 +1092,9 @@ class AC_Admin
             wp_send_json_error($result);
         }
     }
-    
-    public function ajax_test_mailchimp_connection() {
+
+    public function ajax_test_mailchimp_connection()
+    {
         $result = AC_Mailchimp::test_connection();
         if ($result['success']) {
             wp_send_json_success($result);
@@ -1094,8 +1102,9 @@ class AC_Admin
             wp_send_json_error($result);
         }
     }
-    
-    public function ajax_test_brevo_connection() {
+
+    public function ajax_test_brevo_connection()
+    {
         $result = AC_Brevo::test_connection();
         if ($result['success']) {
             wp_send_json_success($result);
@@ -1103,8 +1112,9 @@ class AC_Admin
             wp_send_json_error($result);
         }
     }
-    
-    public function ajax_get_mailchimp_lists() {
+
+    public function ajax_get_mailchimp_lists()
+    {
         $lists = AC_Mailchimp::get_lists();
         if (!empty($lists)) {
             wp_send_json_success(array('lists' => $lists));
@@ -1112,8 +1122,9 @@ class AC_Admin
             wp_send_json_error(array('message' => 'No lists found or API error'));
         }
     }
-    
-    public function ajax_get_brevo_lists() {
+
+    public function ajax_get_brevo_lists()
+    {
         $lists = AC_Brevo::get_lists();
         if (!empty($lists)) {
             wp_send_json_success(array('lists' => $lists));
@@ -1178,9 +1189,9 @@ class AC_List_Table extends WP_List_Table
             case 'status':
                 $status = isset($item->status) ? $item->status : 'abandoned';
                 if ($status === 'recovered') {
-                    return '<span class="badge" style="background:#46b450;color:#fff;padding:3px 8px;border-radius:4px;">Recovered</span>';
+                    return '<span class="ac-badge ac-badge-recovered">Recovered</span>';
                 }
-                return '<span class="badge" style="background:#666;color:#fff;padding:3px 8px;border-radius:4px;">Abandoned</span>';
+                return '<span class="ac-badge ac-badge-abandoned">Abandoned</span>';
             case 'reminders_sent':
                 return 'R1:' . ($item->reminder1_sent ? 'Yes' : 'No') . ', ' .
                     'R2:' . ($item->reminder2_sent ? 'Yes' : 'No') . ', ' .
