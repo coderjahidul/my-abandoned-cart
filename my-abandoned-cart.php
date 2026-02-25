@@ -63,36 +63,54 @@ function ac_capture_guest()
     global $wpdb;
     $table_name = $wpdb->prefix . 'abandoned_carts';
 
-    $email = sanitize_email($_POST['email']);
-    $name = sanitize_text_field($_POST['name']);
-    $phone = sanitize_text_field($_POST['phone']);
+    $email = sanitize_email($_POST['email'] ?? '');
+    $name = sanitize_text_field($_POST['name'] ?? '');
+    $phone = sanitize_text_field($_POST['phone'] ?? '');
     $session_id = WC()->session->get_customer_id();
 
-    // Check if entry already exists for this session, email, or phone (match email/phone only if not empty)
-    $existing = $wpdb->get_var($wpdb->prepare(
-        "SELECT id FROM $table_name WHERE (session_id = %s OR (email = %s AND email != '') OR (phone = %s AND phone != '')) AND status = 'abandoned' LIMIT 1",
+    // Build address from the posted billing fields (only if fields were sent)
+    $address_parts = array_filter([
+        sanitize_text_field($_POST['billing_address_1'] ?? ''),
+        sanitize_text_field($_POST['billing_address_2'] ?? ''),
+        sanitize_text_field($_POST['billing_city'] ?? ''),
+        sanitize_text_field($_POST['billing_state'] ?? ''),
+        sanitize_text_field($_POST['billing_postcode'] ?? ''),
+        sanitize_text_field($_POST['billing_country'] ?? ''),
+    ]);
+    $address = implode(', ', $address_parts);
+
+    // Look for ANY existing row for this session/email/phone —
+    // regardless of status — so we ALWAYS update, never duplicate-insert.
+    $existing = $wpdb->get_row($wpdb->prepare(
+        "SELECT id, address FROM $table_name
+         WHERE (session_id = %s OR (email = %s AND email != '') OR (phone = %s AND phone != ''))
+         ORDER BY id DESC LIMIT 1",
         $session_id,
         $email,
         $phone
     ));
 
-    $data = array(
+    $data = [
         'user_id' => is_user_logged_in() ? get_current_user_id() : 0,
         'session_id' => $session_id,
         'email' => $email,
         'name' => $name,
         'phone' => $phone,
+        // Keep the previously captured address if the new one is empty
+        // (prevents a partial-field blur from blanking a complete address)
+        'address' => !empty($address) ? $address : ($existing->address ?? ''),
         'cart_data' => json_encode(WC()->cart->get_cart()),
         'last_activity' => current_time('mysql'),
-    );
+        'status' => 'abandoned',
+    ];
 
     if ($existing) {
-        $wpdb->update($table_name, $data, array('id' => $existing));
-        wp_send_json_success("Guest data updated");
+        $wpdb->update($table_name, $data, ['id' => $existing->id]);
+        wp_send_json_success('Guest data updated');
     } else {
         $data['restore_key'] = wp_generate_uuid4();
         $wpdb->insert($table_name, $data);
-        wp_send_json_success("Guest data stored");
+        wp_send_json_success('Guest data stored');
     }
 }
 

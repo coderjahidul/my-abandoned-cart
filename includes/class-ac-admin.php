@@ -23,6 +23,8 @@ class AC_Admin
         add_action('wp_ajax_ac_test_brevo_connection', array($this, 'ajax_test_brevo_connection'));
         add_action('wp_ajax_ac_get_mailchimp_lists', array($this, 'ajax_get_mailchimp_lists'));
         add_action('wp_ajax_ac_get_brevo_lists', array($this, 'ajax_get_brevo_lists'));
+        add_action('wp_ajax_ac_mark_recovered', array($this, 'ajax_mark_recovered'));
+        add_action('wp_ajax_ac_get_cart_details', array($this, 'ajax_get_cart_details'));
     }
 
     public function enqueue_admin_scripts($hook)
@@ -316,7 +318,252 @@ class AC_Admin
         echo '<form method="post">';
         $ac_list_table->search_box('Search Carts', 'ac_search');
         $ac_list_table->display();
-        echo '</form></div>';
+        echo '</form>';
+        ?>
+
+        <!-- ===== Cart View Modal ===== -->
+        <div id="ac-view-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);overflow-y:auto;padding:20px 0;">
+            <div style="background:#fff;border-radius:8px;max-width:820px;margin:0 auto;box-shadow:0 10px 50px rgba(0,0,0,.3);overflow:hidden;">
+                <!-- Modal Header -->
+                <div style="background:#1d2327;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;">
+                    <h2 style="margin:0;color:#fff;font-size:15px;font-weight:600;">
+                        &#128722; Cart Details &mdash;
+                        <span id="ac-modal-customer-name" style="font-weight:400;opacity:.85;"></span>
+                    </h2>
+                    <button id="ac-modal-close" style="background:none;border:none;color:#aaa;font-size:26px;line-height:1;cursor:pointer;padding:0 4px;">&times;</button>
+                </div>
+                <!-- Modal Body -->
+                <div id="ac-modal-body" style="padding:24px;">
+                    <p style="color:#888;text-align:center;padding:30px 0;">Loading&hellip;</p>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+
+            /* ======== VIEW CART MODAL ======== */
+            $(document).on('click', '.ac-view-cart-btn', function () {
+                var cartId = $(this).data('id');
+                var nonce  = $(this).data('nonce');
+
+                $('#ac-modal-customer-name').text('Loading…');
+                $('#ac-modal-body').html('<p style="color:#888;text-align:center;padding:30px 0;">Loading&hellip;</p>');
+                $('#ac-view-modal').fadeIn(200);
+
+                $.ajax({
+                    url:  ajaxurl,
+                    type: 'POST',
+                    data: { action: 'ac_get_cart_details', cart_id: cartId, nonce: nonce },
+                    success: function (res) {
+                        if (!res.success) {
+                            $('#ac-modal-body').html('<p style="color:red;padding:20px;">' + res.data.message + '</p>');
+                            return;
+                        }
+                        var d = res.data;
+                        $('#ac-modal-customer-name').text(d.name || d.email || '#' + cartId);
+
+                        /* --- Customer info grid --- */
+                        var infoRows = [
+                            ['&#128100; Name',    d.name],
+                            ['&#9993; Email',     d.email ? '<a href="mailto:'+d.email+'" style="color:#2271b1;">'+d.email+'</a>' : ''],
+                            ['&#128222; Phone',   d.phone],
+                            ['&#128205; Address', d.address],
+                            ['&#9719; Status',    d.status ? '<span style="text-transform:capitalize;font-weight:600;color:' + (d.status==='recovered'?'#46b450':'#f0ad4e') + ';">' + d.status + '</span>' : ''],
+                            ['&#128336; Activity',d.last_activity],
+                            ['&#127991; Coupon',  d.coupon_code ? '<code style="background:#e8f0fe;padding:2px 8px;border-radius:3px;font-size:12px;">'+d.coupon_code+'</code>' : '']
+                        ].filter(function(r){ return r[1]; });
+
+                        var info = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px 28px;background:#f6f7f7;border-radius:6px;padding:16px;margin-bottom:22px;font-size:13px;">';
+                        infoRows.forEach(function(r){
+                            info += '<div><strong style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:3px;">'+r[0]+'</strong><span>'+r[1]+'</span></div>';
+                        });
+                        info += '</div>';
+
+                        /* --- Products table --- */
+                        var tbl = '<div style="overflow-x:auto;">';
+                        tbl += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+                        tbl += '<thead><tr style="background:#f6f7f7;">';
+                        ['Product','Qty','Unit Price','Total'].forEach(function(h,i){
+                            var align = i === 0 ? 'left' : (i === 1 ? 'center' : 'right');
+                            tbl += '<th style="padding:9px 12px;text-align:'+align+';border-bottom:2px solid #ddd;white-space:nowrap;">'+h+'</th>';
+                        });
+                        tbl += '</tr></thead><tbody>';
+
+                        if (d.products && d.products.length) {
+                            d.products.forEach(function (p) {
+                                tbl += '<tr style="border-bottom:1px solid #f0f0f0;transition:background .15s;" onmouseover="this.style.background=\'#fafafa\'" onmouseout="this.style.background=\'\'">';
+
+                                /* Product cell */
+                                tbl += '<td style="padding:12px;">';
+                                tbl += '<div style="display:flex;align-items:center;gap:12px;">';
+                                if (p.thumb) {
+                                    tbl += '<img src="'+p.thumb+'" style="width:52px;height:52px;object-fit:cover;border-radius:5px;border:1px solid #e2e4e7;flex-shrink:0;">';
+                                }
+                                tbl += '<div>';
+                                tbl += '<strong style="font-size:13px;">'+p.name+'</strong>';
+                                if (p.variation) tbl += '<div style="color:#888;font-size:11px;margin-top:2px;">'+p.variation+'</div>';
+                                if (p.sku) tbl += '<div style="color:#bbb;font-size:11px;">SKU: '+p.sku+'</div>';
+                                tbl += '</div></div></td>';
+
+                                tbl += '<td style="padding:12px;text-align:center;font-weight:600;">'+p.quantity+'</td>';
+                                tbl += '<td style="padding:12px;text-align:right;color:#555;">'+p.price_html+'</td>';
+                                tbl += '<td style="padding:12px;text-align:right;font-weight:700;color:#1d2327;">'+p.line_total_html+'</td>';
+                                tbl += '</tr>';
+                            });
+
+                            /* Cart total row */
+                            tbl += '<tfoot><tr>';
+                            tbl += '<td colspan="3" style="padding:12px;text-align:right;font-size:14px;font-weight:700;border-top:2px solid #ddd;">Cart Total</td>';
+                            tbl += '<td style="padding:12px;text-align:right;font-size:15px;font-weight:800;color:#2271b1;border-top:2px solid #ddd;">'+d.cart_total_html+'</td>';
+                            tbl += '</tr></tfoot>';
+                        } else {
+                            tbl += '<tr><td colspan="4" style="padding:20px;color:#888;text-align:center;">No product data recorded for this cart.</td></tr>';
+                        }
+                        tbl += '</table></div>';
+
+                        $('#ac-modal-body').html(info + tbl);
+                    },
+                    error: function () {
+                        $('#ac-modal-body').html('<p style="color:red;padding:20px;">Request failed. Please try again.</p>');
+                    }
+                });
+            });
+
+            /* Close modal on X or backdrop click */
+            $('#ac-modal-close').on('click', function(){ $('#ac-view-modal').fadeOut(200); });
+            $('#ac-view-modal').on('click', function(e){ if (e.target === this) $(this).fadeOut(200); });
+            $(document).on('keydown', function(e){ if (e.key === 'Escape') $('#ac-view-modal').fadeOut(200); });
+
+            /* ======== MARK RECOVERED ======== */
+            $(document).on('click', '.ac-mark-recovered-btn', function () {
+                var btn    = $(this);
+                var cartId = btn.data('id');
+                var nonce  = btn.data('nonce');
+                var fb     = $('#ac-rf-' + cartId);
+
+                btn.prop('disabled', true).text('Creating order…');
+                fb.html('');
+
+                $.ajax({
+                    url:  ajaxurl,
+                    type: 'POST',
+                    data: { action: 'ac_mark_recovered', cart_id: cartId, nonce: nonce },
+                    success: function (response) {
+                        if (response.success) {
+                            var orderId  = response.data.order_id;
+                            var orderUrl = response.data.order_url;
+                            btn.replaceWith('<span class="ac-badge ac-badge-recovered">&#10003; Recovered</span>');
+                            btn.closest('tr').find('.ac-badge-abandoned')
+                                .removeClass('ac-badge-abandoned').addClass('ac-badge-recovered').text('Recovered');
+                            fb.html('<span style="color:#46b450;">&#10003; Order #' + orderId + ' created! <a href="' + orderUrl + '">View order &rarr;</a></span>');
+                            setTimeout(function () { window.location.href = orderUrl; }, 1500);
+                        } else {
+                            btn.prop('disabled', false).text('Mark Recovered');
+                            fb.html('<span style="color:#dc3232;">&#10007; ' + response.data.message + '</span>');
+                        }
+                    },
+                    error: function () {
+                        btn.prop('disabled', false).text('Mark Recovered');
+                        fb.html('<span style="color:#dc3232;">&#10007; Request failed. Please try again.</span>');
+                    }
+                });
+            });
+        });
+        </script>
+        <?php
+        echo '</div>';
+    }
+
+    /**
+     * AJAX handler: return full cart + product details for the View modal.
+     */
+    public function ajax_get_cart_details()
+    {
+        $id = isset($_POST['cart_id']) ? intval($_POST['cart_id']) : 0;
+        if (!$id) {
+            wp_send_json_error(['message' => 'Invalid cart ID.']);
+        }
+
+        if (!check_ajax_referer('ac_view_cart_' . $id, 'nonce', false)) {
+            wp_send_json_error(['message' => 'Security check failed.']);
+        }
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Permission denied.']);
+        }
+
+        global $wpdb;
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}abandoned_carts WHERE id = %d LIMIT 1", $id
+        ));
+        if (!$row) {
+            wp_send_json_error(['message' => 'Cart not found.']);
+        }
+
+        $cart_items = json_decode($row->cart_data, true);
+        $products   = [];
+        $cart_total = 0.0;
+
+        if (is_array($cart_items)) {
+            foreach ($cart_items as $item) {
+                $product_id   = intval($item['product_id']   ?? 0);
+                $variation_id = intval($item['variation_id'] ?? 0);
+                $quantity     = intval($item['quantity']     ?? 1);
+
+                $product = ($variation_id > 0) ? wc_get_product($variation_id) : wc_get_product($product_id);
+                if (!$product) {
+                    continue;
+                }
+
+                $price      = (float) $product->get_price();
+                $line_total = $price * $quantity;
+                $cart_total += $line_total;
+
+                /* Build variation label */
+                $variation_label = '';
+                if ($variation_id && !empty($item['variation']) && is_array($item['variation'])) {
+                    $parts = [];
+                    foreach ($item['variation'] as $attr => $val) {
+                        if ($val !== '') {
+                            $label   = wc_attribute_label(str_replace('attribute_', '', $attr));
+                            $parts[] = esc_html($label) . ': ' . esc_html($val);
+                        }
+                    }
+                    $variation_label = implode(' | ', $parts);
+                }
+
+                /* Thumbnail URL */
+                $thumb_id  = $product->get_image_id();
+                $thumb_url = $thumb_id
+                    ? wp_get_attachment_image_url($thumb_id, 'thumbnail')
+                    : wc_placeholder_img_src('thumbnail');
+
+                $products[] = [
+                    'name'            => esc_html($product->get_name()),
+                    'sku'             => esc_html($product->get_sku()),
+                    'thumb'           => esc_url($thumb_url),
+                    'variation'       => $variation_label,
+                    'quantity'        => $quantity,
+                    'price'           => $price,
+                    'price_html'      => wc_price($price),
+                    'line_total'      => $line_total,
+                    'line_total_html' => wc_price($line_total),
+                ];
+            }
+        }
+
+        wp_send_json_success([
+            'name'            => esc_html($row->name      ?? ''),
+            'email'           => esc_html($row->email     ?? ''),
+            'phone'           => esc_html($row->phone     ?? ''),
+            'address'         => esc_html($row->address   ?? ''),
+            'status'          => esc_html($row->status    ?? ''),
+            'last_activity'   => esc_html($row->last_activity ?? ''),
+            'coupon_code'     => esc_html($row->coupon_code  ?? ''),
+            'products'        => $products,
+            'cart_total'      => $cart_total,
+            'cart_total_html' => wc_price($cart_total),
+        ]);
     }
 
     public function settings_page()
@@ -1132,6 +1379,140 @@ class AC_Admin
             wp_send_json_error(array('message' => 'No lists found or API error'));
         }
     }
+
+    public function ajax_mark_recovered()
+    {
+        $id = isset($_POST['cart_id']) ? intval($_POST['cart_id']) : 0;
+        if (!$id) {
+            wp_send_json_error(array('message' => 'Invalid cart ID.'));
+        }
+
+        if (!check_ajax_referer('ac_mark_recovered_' . $id, 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Security check failed.'));
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permission denied.'));
+        }
+
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'abandoned_carts';
+
+        // Load the abandoned cart row
+        $cart_row = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table_name WHERE id = %d LIMIT 1",
+            $id
+        ));
+
+        if (!$cart_row) {
+            wp_send_json_error(array('message' => 'Cart not found.'));
+        }
+
+        // Parse saved cart items
+        $cart_items = json_decode($cart_row->cart_data, true);
+        if (empty($cart_items) || !is_array($cart_items)) {
+            wp_send_json_error(array('message' => 'Cart data is empty or invalid.'));
+        }
+
+        // ---- Create WooCommerce Order ----
+        $order = wc_create_order();
+        if (is_wp_error($order)) {
+            wp_send_json_error(array('message' => 'Failed to create order: ' . $order->get_error_message()));
+        }
+
+        // Add line items from the saved cart data
+        foreach ($cart_items as $item) {
+            $product_id = isset($item['product_id']) ? intval($item['product_id']) : 0;
+            $variation_id = isset($item['variation_id']) ? intval($item['variation_id']) : 0;
+            $quantity = isset($item['quantity']) ? intval($item['quantity']) : 1;
+
+            if (!$product_id) {
+                continue;
+            }
+
+            $product = $variation_id ? wc_get_product($variation_id) : wc_get_product($product_id);
+            if (!$product) {
+                continue;
+            }
+
+            $order->add_product($product, $quantity, array(
+                'variation' => isset($item['variation']) ? $item['variation'] : array(),
+            ));
+        }
+
+        // Set billing address from saved data
+        $name_parts = explode(' ', $cart_row->name, 2);
+        $first_name = $name_parts[0] ?? '';
+        $last_name = $name_parts[1] ?? '';
+
+        // Parse the stored address string back into parts (comma-separated)
+        $addr_parts = array_map('trim', explode(',', $cart_row->address ?? ''));
+
+        $order->set_billing_first_name($first_name);
+        $order->set_billing_last_name($last_name);
+        $order->set_billing_email($cart_row->email ?? '');
+        $order->set_billing_phone($cart_row->phone ?? '');
+        $order->set_billing_address_1($addr_parts[0] ?? '');
+        $order->set_billing_address_2($addr_parts[1] ?? '');
+        $order->set_billing_city($addr_parts[2] ?? '');
+        $order->set_billing_state($addr_parts[3] ?? '');
+        $order->set_billing_postcode($addr_parts[4] ?? '');
+        $order->set_billing_country($addr_parts[5] ?? '');
+
+        // Copy billing to shipping as well
+        $order->set_shipping_first_name($first_name);
+        $order->set_shipping_last_name($last_name);
+        $order->set_shipping_address_1($addr_parts[0] ?? '');
+        $order->set_shipping_address_2($addr_parts[1] ?? '');
+        $order->set_shipping_city($addr_parts[2] ?? '');
+        $order->set_shipping_state($addr_parts[3] ?? '');
+        $order->set_shipping_postcode($addr_parts[4] ?? '');
+        $order->set_shipping_country($addr_parts[5] ?? '');
+
+        // Link to WP user if available
+        if (!empty($cart_row->user_id)) {
+            $order->set_customer_id(intval($cart_row->user_id));
+        }
+
+        // Note on the order
+        $order->add_order_note(
+            __('Order created manually via Abandoned Cart Recovery.', 'my-abandoned-cart'),
+            0,
+            false
+        );
+
+        // Apply coupon if one was generated for this cart
+        if (!empty($cart_row->coupon_code)) {
+            $order->apply_coupon(strtolower($cart_row->coupon_code));
+        }
+
+        $order->calculate_totals();
+        $order->set_status('pending');
+        $order->save();
+
+        $order_id = $order->get_id();
+        $order_url = admin_url('post.php?post=' . $order_id . '&action=edit');
+
+        // Mark the abandoned cart as recovered
+        $wpdb->update(
+            $table_name,
+            array(
+                'status' => 'recovered',
+                'recovered_at' => current_time('mysql'),
+                'order_id' => $order_id,
+                'recovered_amount' => $order->get_total(),
+            ),
+            array('id' => $id),
+            array('%s', '%s', '%d', '%f'),
+            array('%d')
+        );
+
+        wp_send_json_success(array(
+            'message' => 'Order #' . $order_id . ' created successfully.',
+            'order_id' => $order_id,
+            'order_url' => $order_url,
+        ));
+    }
 }
 
 class AC_List_Table extends WP_List_Table
@@ -1156,11 +1537,14 @@ class AC_List_Table extends WP_List_Table
             'email' => 'Email',
             'name' => 'Name',
             'phone' => 'Phone',
+            'address' => 'Address',
             'last_activity' => 'Last Activity',
             'status' => 'Status',
             'reminders_sent' => 'Reminders Sent',
             'coupon_code' => 'Coupon',
-            'restore_link' => 'Restore Link'
+            // 'restore_link' => 'Restore Link',
+            'actions' => 'Actions',
+            'order_recovered' => 'Order Recovered',
         ];
     }
 
@@ -1186,6 +1570,8 @@ class AC_List_Table extends WP_List_Table
             case 'last_activity':
             case 'coupon_code':
                 return esc_html($item->$column_name);
+            case 'address':
+                return esc_html(!empty($item->address) ? $item->address : '—');
             case 'status':
                 $status = isset($item->status) ? $item->status : 'abandoned';
                 if ($status === 'recovered') {
@@ -1196,9 +1582,34 @@ class AC_List_Table extends WP_List_Table
                 return 'R1:' . ($item->reminder1_sent ? 'Yes' : 'No') . ', ' .
                     'R2:' . ($item->reminder2_sent ? 'Yes' : 'No') . ', ' .
                     'R3:' . ($item->reminder3_sent ? 'Yes' : 'No');
-            case 'restore_link':
-                $link = add_query_arg('ac_restore', $item->restore_key, site_url('/'));
-                return '<a href="' . esc_url($link) . '" target="_blank">Restore</a>';
+            // case 'restore_link':
+            //     $link = add_query_arg('ac_restore', $item->restore_key, site_url('/'));
+            //     return '<a href="' . esc_url($link) . '" target="_blank">Restore</a>';
+            case 'actions':
+                $view_nonce = wp_create_nonce('ac_view_cart_' . $item->id);
+                return sprintf(
+                    '<button type="button" class="button ac-view-cart-btn" '
+                    . 'data-id="%d" data-nonce="%s" '
+                    . 'title="View Cart Details" style="padding:2px 8px;font-size:11px;">'
+                    . '&#128065; View</button>',
+                    intval($item->id),
+                    esc_attr($view_nonce)
+                );
+            case 'order_recovered':
+                $status = isset($item->status) ? $item->status : 'abandoned';
+                if ($status === 'recovered') {
+                    return '<span class="ac-badge ac-badge-recovered">&#10003; Recovered</span>';
+                }
+                $nonce = wp_create_nonce('ac_mark_recovered_' . $item->id);
+                return sprintf(
+                    '<button type="button" class="button button-primary ac-mark-recovered-btn" '
+                    . 'data-id="%d" data-nonce="%s" style="font-size:11px;padding:2px 8px;">'
+                    . 'Mark Recovered</button>'
+                    . '<span class="ac-recovered-feedback" id="ac-rf-%d" style="margin-left:6px;"></span>',
+                    intval($item->id),
+                    esc_attr($nonce),
+                    intval($item->id)
+                );
             default:
                 return '';
         }

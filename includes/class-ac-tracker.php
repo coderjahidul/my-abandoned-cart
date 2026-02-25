@@ -8,7 +8,14 @@ class AC_Tracker
     public function __construct()
     {
         // add_action('woocommerce_add_to_cart', array($this, 'track_cart'), 10, 6);
+
+        // Fires for logged-in users — captures most fields including address
         add_action('woocommerce_checkout_update_user_meta', array($this, 'save_checkout_data'), 10, 2);
+
+        // Fires for ALL users (priority 5 = before clear_cart at 10)
+        // $posted_data here is the fully-parsed WooCommerce checkout data
+        add_action('woocommerce_checkout_order_processed', array($this, 'save_address_from_order'), 5, 3);
+
         add_action('woocommerce_checkout_order_processed', array($this, 'clear_cart'), 10, 3);
         add_action('init', array($this, 'maybe_restore_cart'));
 
@@ -29,6 +36,7 @@ class AC_Tracker
             email VARCHAR(255),
             name VARCHAR(255),
             phone VARCHAR(50),
+            address TEXT NULL,
             cart_data LONGTEXT,
             restore_key VARCHAR(255),
             last_activity DATETIME,
@@ -58,6 +66,9 @@ class AC_Tracker
         }
         if ($row && !isset($row->recovered_amount)) {
             $wpdb->query("ALTER TABLE $table_name ADD COLUMN recovered_amount DECIMAL(10,2) DEFAULT 0");
+        }
+        if ($row && !isset($row->address)) {
+            $wpdb->query("ALTER TABLE $table_name ADD COLUMN address TEXT NULL");
         }
     }
 
@@ -111,6 +122,18 @@ class AC_Tracker
         $phone = isset($posted['billing_phone']) ? sanitize_text_field($posted['billing_phone']) : '';
         $session_id = WC()->session->get_customer_id();
 
+        // Build a formatted billing address string from $posted.
+        // $posted is the fully-parsed WooCommerce checkout array.
+        $address_parts = array_filter([
+            isset($posted['billing_address_1']) ? sanitize_text_field($posted['billing_address_1']) : '',
+            isset($posted['billing_address_2']) ? sanitize_text_field($posted['billing_address_2']) : '',
+            isset($posted['billing_city']) ? sanitize_text_field($posted['billing_city']) : '',
+            isset($posted['billing_state']) ? sanitize_text_field($posted['billing_state']) : '',
+            isset($posted['billing_postcode']) ? sanitize_text_field($posted['billing_postcode']) : '',
+            isset($posted['billing_country']) ? sanitize_text_field($posted['billing_country']) : '',
+        ]);
+        $address = implode(', ', $address_parts);
+
         // Check if entry already exists for this session, email, or phone (match email/phone only if not empty)
         $existing = $wpdb->get_var($wpdb->prepare(
             "SELECT id FROM $table_name WHERE (session_id = %s OR (email = %s AND email != '') OR (phone = %s AND phone != '')) AND status = 'abandoned' LIMIT 1",
@@ -128,6 +151,7 @@ class AC_Tracker
             'email' => $email,
             'name' => $name,
             'phone' => $phone,
+            'address' => $address,
             'cart_data' => $cart_data,
             'last_activity' => current_time('mysql'),
         );
@@ -138,19 +162,19 @@ class AC_Tracker
             $data['restore_key'] = wp_generate_uuid4();
             $wpdb->insert($table_name, $data);
         }
-        
+
         // Sync to marketing tools if enabled
         if (!empty($email)) {
             $sync_data = array(
                 'name' => $name,
                 'phone' => $phone
             );
-            
+
             // Sync to Mailchimp
             if (get_option('ac_mailchimp_enabled', '0') === '1') {
                 AC_Mailchimp::sync_contact($email, $sync_data);
             }
-            
+
             // Sync to Brevo
             if (get_option('ac_brevo_enabled', '0') === '1') {
                 AC_Brevo::sync_contact($email, $sync_data);
@@ -159,6 +183,61 @@ class AC_Tracker
     }
 
 
+    /**
+     * Runs on woocommerce_checkout_order_processed (priority 5, before clear_cart).
+     * Fires for EVERY user — logged-in and guest — right after the order is saved.
+     * $posted_data is the fully-parsed WooCommerce checkout array that always
+     * contains all billing fields including billing_address_1.
+     *
+     * @param int      $order_id    New WC order ID.
+     * @param array    $posted_data Parsed checkout POST data.
+     * @param WC_Order $order       The new order object.
+     */
+    public function save_address_from_order($order_id, $posted_data, $order)
+    {
+        if (!$order instanceof WC_Order) {
+            return;
+        }
+
+        // Read address directly from the WC_Order object — guaranteed to be populated.
+        $address_parts = array_filter([
+            $order->get_billing_address_1(),
+            $order->get_billing_address_2(),
+            $order->get_billing_city(),
+            $order->get_billing_state(),
+            $order->get_billing_postcode(),
+            $order->get_billing_country(),
+        ]);
+        $address = implode(', ', $address_parts);
+
+        if (empty($address)) {
+            return;
+        }
+
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'abandoned_carts';
+        $email = $order->get_billing_email();
+        $phone = $order->get_billing_phone();
+        $session_id = WC()->session ? WC()->session->get_customer_id() : '';
+
+        // Find the matching abandoned-cart row (any status — could already be cleared)
+        $existing_id = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM $table_name WHERE (session_id = %s OR (email = %s AND email != '') OR (phone = %s AND phone != '')) LIMIT 1",
+            $session_id,
+            $email,
+            $phone
+        ));
+
+        if ($existing_id) {
+            $wpdb->update(
+                $table_name,
+                ['address' => $address],
+                ['id' => $existing_id],
+                ['%s'],
+                ['%d']
+            );
+        }
+    }
 
     public function clear_cart($order_id, $posted_data, $order)
     {
